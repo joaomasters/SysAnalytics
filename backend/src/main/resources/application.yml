@@ -1,0 +1,65 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: sysanalytics-crm
+  jackson:
+    time-zone: America/Sao_Paulo
+    serialization:
+      write-dates-as-timestamps: false
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:sysanalytics}
+    username: ${DB_USER:crm}
+    password: ${DB_PASSWORD:crm}
+
+  jpa:
+    hibernate:
+      ddl-auto: update          # PoC: em produção usar Flyway/Liquibase
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc.time_zone: America/Sao_Paulo
+        jdbc.batch_size: 200
+        order_inserts: true
+
+  batch:
+    jdbc:
+      initialize-schema: always # cria as tabelas BATCH_* do Spring Batch
+    job:
+      enabled: false            # o job é disparado via endpoint/agendamento, não no startup
+
+  rabbitmq:
+    host: ${RABBIT_HOST:localhost}
+    port: ${RABBIT_PORT:5672}
+    username: ${RABBIT_USER:crm}
+    password: ${RABBIT_PASSWORD:crm}
+    listener:
+      simple:
+        default-requeue-rejected: false   # mensagens que falham vão para a DLX
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1s
+          multiplier: 2
+
+crm:
+  seed:
+    enabled: true
+  inatividade:
+    # Execução automática diária (06:00). A execução manual é via POST /api/v1/jobs/executar-analise-inatividade
+    cron: "0 0 6 * * *"
+  cors:
+    allowed-origins: http://localhost:5173
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
