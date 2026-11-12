@@ -23,7 +23,11 @@ public class Faturamento {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "numero_nota", nullable = false, length = 20, unique = true)
+    /** Empresa (tenant) dona do registro. Toda consulta deve filtrar por ela. */
+    @Column(name = "empresa_id", nullable = false, updatable = false)
+    private Long empresaId;
+
+    @Column(name = "numero_nota", nullable = false, length = 20)
     private String numeroNota;
 
     @Column(name = "data_faturamento", nullable = false)

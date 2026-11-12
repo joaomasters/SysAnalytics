@@ -12,6 +12,7 @@ public final class ConsultasAnaliticas {
     /**
      * Situação comercial de cada cliente: última compra, dias de inatividade
      * ({@code CURRENT_DATE - MAX(data_faturamento)}), ticket médio e vendedor responsável.
+     * <p>Parâmetros, nesta ordem: {@code empresa_id}, {@code vendedor_id} (ou NULL), {@code vendedor_id} (de novo).</p>
      */
     public static final String SITUACAO_CLIENTES = """
             SELECT c.id                                   AS cliente_id,
@@ -35,7 +36,25 @@ public final class ConsultasAnaliticas {
               FROM cliente c
               JOIN vendedor v ON v.id = c.vendedor_id
               LEFT JOIN faturamento f ON f.cliente_id = c.id
+             WHERE c.empresa_id = ?
+               AND (CAST(? AS bigint) IS NULL OR c.vendedor_id = CAST(? AS bigint))
              GROUP BY c.id, v.id
+            """;
+
+    /**
+     * Situação de um único cliente. Mesmos parâmetros de {@link #SITUACAO_CLIENTES} mais, no fim,
+     * o {@code cliente_id}. Derivada da consulta base para as duas nunca divergirem.
+     */
+    public static final String SITUACAO_CLIENTE = SITUACAO_CLIENTES.replace(
+            "GROUP BY c.id, v.id", "AND c.id = ?\n             GROUP BY c.id, v.id");
+
+    /** Últimas notas de um cliente. Parâmetros: empresa_id, cliente_id. */
+    public static final String ULTIMAS_NOTAS_CLIENTE = """
+            SELECT f.numero_nota, f.data_faturamento, f.valor_total
+              FROM faturamento f
+             WHERE f.empresa_id = ? AND f.cliente_id = ?
+             ORDER BY f.data_faturamento DESC, f.id DESC
+             LIMIT 12
             """;
 
     /** Apenas clientes a partir da faixa de Alerta (>= 30 dias ou sem nenhuma compra). Usado pelo job. */
@@ -52,6 +71,7 @@ public final class ConsultasAnaliticas {
                    COUNT(*)           AS notas
               FROM faturamento f
              WHERE f.data_faturamento BETWEEN ? AND ?
+               AND f.empresa_id = ?
              GROUP BY 1
             """;
 
@@ -63,6 +83,7 @@ public final class ConsultasAnaliticas {
                    SUM(CASE WHEN c.tipo = 'VARIAVEL' THEN c.valor ELSE 0 END) AS variaveis
               FROM custo c
              WHERE c.data_lancamento BETWEEN ? AND ?
+               AND c.empresa_id = ?
              GROUP BY 1
             """;
 
@@ -79,6 +100,7 @@ public final class ConsultasAnaliticas {
               LEFT JOIN faturamento f
                      ON f.vendedor_id = v.id
                     AND f.data_faturamento BETWEEN ? AND ?
+             WHERE v.empresa_id = ?
              GROUP BY v.id
              ORDER BY faturamento DESC
             """;

@@ -23,6 +23,10 @@ public class NotificacaoAlerta {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Empresa (tenant) dona do registro. Toda consulta deve filtrar por ela. */
+    @Column(name = "empresa_id", nullable = false, updatable = false)
+    private Long empresaId;
+
     @Column(name = "cliente_id", nullable = false)
     private Long clienteId;
 

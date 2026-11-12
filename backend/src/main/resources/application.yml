@@ -14,9 +14,12 @@ spring:
     username: ${DB_USER:crm}
     password: ${DB_PASSWORD:crm}
 
+  flyway:
+    enabled: true             # o schema é versionado em src/main/resources/db/migration
+
   jpa:
     hibernate:
-      ddl-auto: update          # PoC: em produção usar Flyway/Liquibase
+      ddl-auto: validate      # o Flyway é a única fonte do schema; o Hibernate só confere
     open-in-view: false
     properties:
       hibernate:
@@ -46,12 +49,17 @@ spring:
 
 crm:
   seed:
-    enabled: true
+    enabled: ${CRM_SEED_ENABLED:true}     # DESLIGAR fora de desenvolvimento
+    senha-padrao: ${CRM_SEED_SENHA:Trocar@123}
+  security:
+    # HS256: mínimo 32 caracteres. Em produção SEMPRE definir JWT_SECRET (o padrão abaixo é só para dev).
+    jwt-secret: ${JWT_SECRET:dev-only-secret-troque-em-producao-0123456789}
+    jwt-ttl-minutos: 480
   inatividade:
-    # Execução automática diária (06:00). A execução manual é via POST /api/v1/jobs/executar-analise-inatividade
+    # Execução automática diária (06:00) para cada empresa ativa. Manual: POST /api/v1/jobs/executar-analise-inatividade
     cron: "0 0 6 * * *"
   cors:
-    allowed-origins: http://localhost:5173
+    allowed-origins: ${CORS_ORIGINS:http://localhost:5173}
 
 springdoc:
   swagger-ui:

@@ -100,3 +100,166 @@ export interface ExecucaoJob {
   eventosPorNivel: Partial<Record<NivelRisco, number>>
   erro: string | null
 }
+
+export type Perfil = 'ADMIN' | 'GESTOR' | 'VENDEDOR'
+
+export interface Usuario {
+  id: number
+  nome: string
+  email: string
+  perfil: Perfil
+  empresaId: number
+  empresaNome: string
+  vendedorId: number | null
+}
+
+export interface LoginResposta {
+  token: string
+  tipo: string
+  expiraEm: string
+  usuario: Usuario
+}
+
+export interface Contato {
+  id: number
+  nome: string
+  cargo: string | null
+  email: string | null
+  telefone: string | null
+  principal: boolean
+}
+
+export interface ContatoInput {
+  nome: string
+  cargo?: string
+  email?: string
+  telefone?: string
+  principal: boolean
+}
+
+export interface NotaResumo {
+  numeroNota: string
+  dataFaturamento: string
+  valorTotal: number
+}
+
+export interface ClienteDetalhe {
+  resumo: ClienteRisco
+  email: string | null
+  telefone: string | null
+  dataCadastro: string
+  contatos: Contato[]
+  ultimasNotas: NotaResumo[]
+}
+
+export type TipoInteracao = 'LIGACAO' | 'EMAIL' | 'VISITA' | 'WHATSAPP' | 'REUNIAO' | 'OUTRO'
+export type StatusTarefa = 'ABERTA' | 'CONCLUIDA' | 'CANCELADA'
+export type OrigemTarefa = 'MANUAL' | 'ALERTA'
+export type ResultadoTarefa = 'REATIVADO' | 'EM_NEGOCIACAO' | 'SEM_RETORNO' | 'PERDIDO' | 'OUTRO'
+
+export interface Interacao {
+  id: number
+  tipo: TipoInteracao
+  dataHora: string
+  resumo: string
+  contatoId: number | null
+  contatoNome: string | null
+  usuarioId: number
+  usuarioNome: string
+}
+
+export interface InteracaoInput {
+  tipo: TipoInteracao
+  resumo: string
+  contatoId?: number
+}
+
+export interface Tarefa {
+  id: number
+  clienteId: number
+  clienteNome: string
+  responsavelId: number
+  responsavelNome: string
+  titulo: string
+  descricao: string | null
+  prazo: string
+  status: StatusTarefa
+  origem: OrigemTarefa
+  resultado: ResultadoTarefa | null
+  atrasada: boolean
+  concluidaEm: string | null
+  criadaEm: string
+}
+
+export interface TarefaInput {
+  clienteId: number
+  titulo: string
+  descricao?: string
+  prazo: string
+}
+
+export interface ConcluirTarefaInput {
+  resultado: ResultadoTarefa
+  resumo?: string
+  tipoInteracao?: TipoInteracao
+}
+
+export type EtapaOportunidade = 'PROSPECCAO' | 'QUALIFICACAO' | 'PROPOSTA' | 'NEGOCIACAO' | 'GANHA' | 'PERDIDA'
+export type MotivoPerda = 'PRECO' | 'CONCORRENTE' | 'SEM_ORCAMENTO' | 'SEM_RETORNO' | 'OUTRO'
+export type SituacaoOportunidade = 'ABERTA' | 'GANHA' | 'PERDIDA'
+
+export interface Oportunidade {
+  id: number
+  clienteId: number
+  clienteNome: string
+  responsavelId: number
+  responsavelNome: string
+  titulo: string
+  descricao: string | null
+  valorEstimado: number
+  probabilidade: number
+  etapa: EtapaOportunidade
+  dataPrevistaFechamento: string | null
+  atrasada: boolean
+  motivoPerda: MotivoPerda | null
+  fechadaEm: string | null
+  criadaEm: string
+}
+
+export interface OportunidadeInput {
+  clienteId: number
+  titulo: string
+  descricao?: string
+  valorEstimado: number
+  dataPrevistaFechamento?: string
+}
+
+export interface OportunidadeEdicaoInput {
+  titulo: string
+  descricao?: string
+  valorEstimado: number
+  dataPrevistaFechamento?: string
+  probabilidade?: number
+}
+
+export interface MoverOportunidadeInput {
+  etapa: EtapaOportunidade
+  motivoPerda?: MotivoPerda
+  probabilidade?: number
+}
+
+export interface EtapaResumo {
+  etapa: EtapaOportunidade
+  quantidade: number
+  valor: number
+  valorPonderado: number
+}
+
+export interface FunilResumo {
+  etapas: EtapaResumo[]
+  pipelineAberto: number
+  previsaoPonderada: number
+  ganhasNoMes: number
+  valorGanhoNoMes: number
+  taxaConversao90d: number | null
+}

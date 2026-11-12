@@ -1,6 +1,8 @@
 package com.sysanalytics.crm.web;
 
 import com.sysanalytics.crm.service.NotificacaoService;
+import com.sysanalytics.crm.service.TarefaService;
+import com.sysanalytics.crm.web.dto.TarefaDtos.TarefaResponse;
 import com.sysanalytics.crm.web.dto.NotificacaoResponse;
 import com.sysanalytics.crm.web.dto.PaginaResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,6 +19,7 @@ import java.util.Map;
 public class NotificacaoController {
 
     private final NotificacaoService service;
+    private final TarefaService tarefaService;
 
     @Operation(summary = "Feed de alertas, do mais recente para o mais antigo")
     @GetMapping
@@ -31,6 +34,12 @@ public class NotificacaoController {
     @GetMapping("/nao-lidas/contagem")
     public Map<String, Long> contarNaoLidas() {
         return Map.of("naoLidas", service.contarNaoLidas());
+    }
+
+    @Operation(summary = "Transforma o alerta em tarefa de reativação (idempotente) e o marca como lido")
+    @PostMapping("/{id}/tarefa")
+    public TarefaResponse criarTarefa(@PathVariable Long id) {
+        return tarefaService.criarDeAlerta(id);
     }
 
     @Operation(summary = "Marca um alerta como lido")

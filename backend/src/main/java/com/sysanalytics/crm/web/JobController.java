@@ -4,12 +4,14 @@ import com.sysanalytics.crm.batch.AnaliseInatividadeService;
 import com.sysanalytics.crm.config.RabbitMqConfig;
 import com.sysanalytics.crm.domain.NivelRisco;
 import com.sysanalytics.crm.messaging.ClienteInatividadeEvent;
+import com.sysanalytics.crm.security.UsuarioLogado;
 import com.sysanalytics.crm.web.dto.ExecucaoJobResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,6 +25,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/jobs")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('GESTOR', 'ADMIN')")
 public class JobController {
 
     private final AnaliseInatividadeService analiseInatividadeService;
@@ -33,7 +36,7 @@ public class JobController {
                     + "Os alertas aparecem no feed assim que os consumidores processam as mensagens.")
     @PostMapping("/executar-analise-inatividade")
     public ExecucaoJobResponse executarAnaliseInatividade() {
-        return analiseInatividadeService.executar("MANUAL");
+        return analiseInatividadeService.executar("MANUAL", UsuarioLogado.atual().empresaId());
     }
 
     @Operation(summary = "[Demo] Publica um evento inválido para demonstrar a Dead Letter Queue",
@@ -41,7 +44,7 @@ public class JobController {
                     + "q.dead-letter.alertas. Veja em http://localhost:15672.")
     @PostMapping("/simular-falha-mensageria")
     public ResponseEntity<Map<String, String>> simularFalha() {
-        var eventoInvalido = new ClienteInatividadeEvent(UUID.randomUUID(), null, "Evento inválido (demo DLQ)",
+        var eventoInvalido = new ClienteInatividadeEvent(UUID.randomUUID(), UsuarioLogado.atual().empresaId(), null, "Evento inválido (demo DLQ)",
                 null, null, null, null, null, null, 120, NivelRisco.CRITICO, LocalDate.now(), OffsetDateTime.now());
         rabbitTemplate.convertAndSend(RabbitMqConfig.EXCHANGE_CLIENTE_EVENTS,
                 NivelRisco.CRITICO.getRoutingKey(), eventoInvalido);
