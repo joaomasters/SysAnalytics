@@ -1,5 +1,6 @@
-import { AlertOctagon, AlertTriangle, BellOff, CheckCheck, Clock, Mail } from 'lucide-react'
+import { AlertOctagon, AlertTriangle, BellOff, CheckCheck, Clock, ListPlus, Mail } from 'lucide-react'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { mensagemDeErro } from '@/api/client'
 import type { NivelRisco, Notificacao } from '@/api/types'
 import { RiscoBadge } from '@/components/RiscoBadge'
@@ -9,6 +10,7 @@ import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   useContagemNaoLidas,
+  useCriarTarefaDeAlerta,
   useMarcarComoLida,
   useMarcarTodasComoLidas,
   useNotificacoes,
@@ -96,6 +98,8 @@ export function AlertasPage() {
 
 function ItemFeed({ notificacao: n }: { notificacao: Notificacao }) {
   const marcarLida = useMarcarComoLida()
+  const criarTarefa = useCriarTarefaDeAlerta()
+  const navigate = useNavigate()
   const { Icone, cor } = ICONE[n.nivel]
 
   return (
@@ -116,12 +120,27 @@ function ItemFeed({ notificacao: n }: { notificacao: Notificacao }) {
         <p className={cn('text-sm', !n.lida && 'font-semibold')}>{n.mensagem}</p>
         <div className="flex items-center justify-between gap-2">
           <p className="text-xs text-muted-foreground">Responsável: {n.vendedorNome ?? '—'}</p>
-          {!n.lida && (
-            <Button variant="link" size="sm" className="h-auto p-0" onClick={() => marcarLida.mutate(n.id)}>
-              Marcar como lido
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={criarTarefa.isPending}
+              onClick={() => criarTarefa.mutate(n.id, { onSuccess: () => navigate('/tarefas') })}
+            >
+              <ListPlus /> {criarTarefa.isPending ? 'Criando…' : 'Criar tarefa'}
             </Button>
-          )}
+            {!n.lida && (
+              <Button variant="link" size="sm" className="h-auto p-0" onClick={() => marcarLida.mutate(n.id)}>
+                Marcar como lido
+              </Button>
+            )}
+          </div>
         </div>
+        {criarTarefa.isError && (
+          <p role="alert" className="text-xs text-destructive">
+            {mensagemDeErro(criarTarefa.error)}
+          </p>
+        )}
       </div>
     </li>
   )

@@ -20,6 +20,10 @@ public class Custo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Empresa (tenant) dona do registro. Toda consulta deve filtrar por ela. */
+    @Column(name = "empresa_id", nullable = false, updatable = false)
+    private Long empresaId;
+
     @Column(nullable = false, length = 160)
     private String descricao;
 

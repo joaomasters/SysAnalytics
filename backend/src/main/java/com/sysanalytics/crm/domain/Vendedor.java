@@ -16,10 +16,14 @@ public class Vendedor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Empresa (tenant) dona do registro. Toda consulta deve filtrar por ela. */
+    @Column(name = "empresa_id", nullable = false, updatable = false)
+    private Long empresaId;
+
     @Column(nullable = false, length = 120)
     private String nome;
 
-    @Column(nullable = false, length = 160, unique = true)
+    @Column(nullable = false, length = 160)
     private String email;
 
     @Column(length = 20)

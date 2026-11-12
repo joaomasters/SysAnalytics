@@ -9,6 +9,7 @@ import java.util.UUID;
 /** Evento publicado em {@code crm.cliente.events} quando um cliente atinge uma faixa de inatividade. */
 public record ClienteInatividadeEvent(
         UUID eventoId,
+        Long empresaId,
         Long clienteId,
         String clienteNome,
         String clienteCnpj,

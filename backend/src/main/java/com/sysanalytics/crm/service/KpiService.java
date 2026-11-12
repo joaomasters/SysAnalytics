@@ -34,7 +34,7 @@ public class KpiService {
     private record CustoPeriodo(BigDecimal total, BigDecimal fixos, BigDecimal variaveis) {
     }
 
-    public KpiDashboardResponse calcular(Granularidade granularidade, LocalDate inicio, LocalDate fim) {
+    public KpiDashboardResponse calcular(Long empresaId, Granularidade granularidade, LocalDate inicio, LocalDate fim) {
         LocalDate dataFim = fim != null ? fim : LocalDate.now();
         LocalDate dataInicio = granularidade.inicioDoPeriodo(
                 inicio != null ? inicio : granularidade.inicioPadrao(dataFim));
@@ -42,8 +42,8 @@ public class KpiService {
             throw new IllegalArgumentException("A data de início deve ser anterior à data de fim");
         }
 
-        Map<LocalDate, FatPeriodo> faturamento = faturamentoPorPeriodo(granularidade, dataInicio, dataFim);
-        Map<LocalDate, CustoPeriodo> custos = custosPorPeriodo(granularidade, dataInicio, dataFim);
+        Map<LocalDate, FatPeriodo> faturamento = faturamentoPorPeriodo(empresaId, granularidade, dataInicio, dataFim);
+        Map<LocalDate, CustoPeriodo> custos = custosPorPeriodo(empresaId, granularidade, dataInicio, dataFim);
 
         // Série contínua (períodos sem movimento aparecem com zero)
         List<PontoSerie> serie = new ArrayList<>();
@@ -68,7 +68,7 @@ public class KpiService {
             notasTotal += f.notas();
         }
 
-        Map<NivelRisco, Long> porNivel = clienteAnaliticoService.contagemPorNivel();
+        Map<NivelRisco, Long> porNivel = clienteAnaliticoService.contagemPorNivel(empresaId, null);
         long totalClientes = porNivel.values().stream().mapToLong(Long::longValue).sum();
         long emRisco = totalClientes - porNivel.getOrDefault(NivelRisco.SEM_RISCO, 0L);
         BigDecimal saldoTotal = fatTotal.subtract(custoTotal);
@@ -80,30 +80,30 @@ public class KpiService {
                 notasTotal, totalClientes, emRisco, porNivel);
 
         return new KpiDashboardResponse(granularidade, dataInicio, dataFim, resumo, serie,
-                ticketPorVendedor(dataInicio, dataFim));
+                ticketPorVendedor(empresaId, dataInicio, dataFim));
     }
 
-    private Map<LocalDate, FatPeriodo> faturamentoPorPeriodo(Granularidade g, LocalDate inicio, LocalDate fim) {
+    private Map<LocalDate, FatPeriodo> faturamentoPorPeriodo(Long empresaId, Granularidade g, LocalDate inicio, LocalDate fim) {
         String sql = ConsultasAnaliticas.FATURAMENTO_POR_PERIODO.formatted(g.expressaoSql("f.data_faturamento"));
         Map<LocalDate, FatPeriodo> mapa = new HashMap<>();
         jdbcTemplate.query(sql, rs -> {
             mapa.put(rs.getDate("periodo").toLocalDate(),
                     new FatPeriodo(rs.getBigDecimal("total"), rs.getLong("notas")));
-        }, inicio, fim);
+        }, inicio, fim, empresaId);
         return mapa;
     }
 
-    private Map<LocalDate, CustoPeriodo> custosPorPeriodo(Granularidade g, LocalDate inicio, LocalDate fim) {
+    private Map<LocalDate, CustoPeriodo> custosPorPeriodo(Long empresaId, Granularidade g, LocalDate inicio, LocalDate fim) {
         String sql = ConsultasAnaliticas.CUSTOS_POR_PERIODO.formatted(g.expressaoSql("c.data_lancamento"));
         Map<LocalDate, CustoPeriodo> mapa = new HashMap<>();
         jdbcTemplate.query(sql, rs -> {
             mapa.put(rs.getDate("periodo").toLocalDate(),
                     new CustoPeriodo(rs.getBigDecimal("total"), rs.getBigDecimal("fixos"), rs.getBigDecimal("variaveis")));
-        }, inicio, fim);
+        }, inicio, fim, empresaId);
         return mapa;
     }
 
-    private List<TicketVendedor> ticketPorVendedor(LocalDate inicio, LocalDate fim) {
+    private List<TicketVendedor> ticketPorVendedor(Long empresaId, LocalDate inicio, LocalDate fim) {
         return jdbcTemplate.query(ConsultasAnaliticas.TICKET_POR_VENDEDOR, (rs, i) -> new TicketVendedor(
                 rs.getLong("vendedor_id"),
                 rs.getString("vendedor_nome"),
@@ -112,7 +112,7 @@ public class KpiService {
                 rs.getLong("clientes_atendidos"),
                 money(rs.getBigDecimal("faturamento")),
                 money(rs.getBigDecimal("ticket_medio"))
-        ), inicio, fim);
+        ), inicio, fim, empresaId);
     }
 
     private static BigDecimal money(BigDecimal valor) {

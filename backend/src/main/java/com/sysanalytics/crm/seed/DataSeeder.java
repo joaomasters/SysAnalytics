@@ -2,14 +2,19 @@ package com.sysanalytics.crm.seed;
 
 import com.sysanalytics.crm.domain.*;
 import com.sysanalytics.crm.repository.ClienteRepository;
+import com.sysanalytics.crm.repository.ContatoRepository;
+import com.sysanalytics.crm.repository.EmpresaRepository;
+import com.sysanalytics.crm.repository.UsuarioRepository;
 import com.sysanalytics.crm.repository.CustoRepository;
 import com.sysanalytics.crm.repository.FaturamentoRepository;
 import com.sysanalytics.crm.repository.VendedorRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +22,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 
@@ -42,12 +48,20 @@ public class DataSeeder implements CommandLineRunner {
     /** Semente fixa: os valores são reproduzíveis entre execuções (as datas são relativas a hoje). */
     private static final long SEED = 20261107L;
 
+    private final EmpresaRepository empresaRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
     private final VendedorRepository vendedorRepository;
     private final ClienteRepository clienteRepository;
+    private final ContatoRepository contatoRepository;
     private final FaturamentoRepository faturamentoRepository;
     private final CustoRepository custoRepository;
 
     private final Random rnd = new Random(SEED);
+
+    /** Senha dos usuários demo. Em qualquer ambiente real, desligue o seed (crm.seed.enabled=false). */
+    @Value("${crm.seed.senha-padrao:Trocar@123}")
+    private String senhaPadrao;
 
     private enum Perfil {
         FREQUENTE(5, 25), ALERTA(35, 50), ATENCAO(65, 80), CRITICO(96, 140);
@@ -107,17 +121,23 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        if (vendedorRepository.count() > 0) {
+        if (empresaRepository.count() > 0) {
             log.info("DataSeeder: base já populada, nada a fazer.");
             return;
         }
         LocalDate hoje = LocalDate.now();
         log.info("DataSeeder: gerando massa de dados mock (referência {})...", hoje);
 
-        List<Vendedor> vendedores = criarVendedores();
-        List<Cliente> clientes = criarClientes(vendedores, hoje);
-        int notas = gerarFaturamentos(clientes, hoje);
-        int custos = gerarCustos(hoje);
+        Empresa empresa = empresaRepository.save(Empresa.builder()
+                .nome("Empresa Demo Revenda Ltda").cnpj("00.000.000/0001-91")
+                .ativa(true).criadaEm(OffsetDateTime.now()).build());
+        Long empresaId = empresa.getId();
+
+        List<Vendedor> vendedores = criarVendedores(empresaId);
+        criarUsuarios(empresaId, vendedores);
+        List<Cliente> clientes = criarClientes(empresaId, vendedores, hoje);
+        int notas = gerarFaturamentos(empresaId, clientes, hoje);
+        int custos = gerarCustos(empresaId, hoje);
 
         log.info("DataSeeder concluído: {} vendedores, {} clientes, {} notas fiscais, {} lançamentos de custo.",
                 vendedores.size(), clientes.size(), notas, custos);
@@ -125,20 +145,41 @@ public class DataSeeder implements CommandLineRunner {
 
     // ------------------------------------------------------------------ vendedores
 
-    private List<Vendedor> criarVendedores() {
+    private List<Vendedor> criarVendedores(Long empresaId) {
         return vendedorRepository.saveAll(List.of(
-                Vendedor.builder().nome("Carla Mendes").email("carla.mendes@sysanalytics.com.br")
+                Vendedor.builder().empresaId(empresaId).nome("Carla Mendes").email("carla.mendes@sysanalytics.com.br")
                         .telefone("(11) 98877-1020").carteira("Sudeste - Varejo e Serviços").build(),
-                Vendedor.builder().nome("Bruno Oliveira").email("bruno.oliveira@sysanalytics.com.br")
+                Vendedor.builder().empresaId(empresaId).nome("Bruno Oliveira").email("bruno.oliveira@sysanalytics.com.br")
                         .telefone("(41) 99712-3344").carteira("Sul - Indústria").build(),
-                Vendedor.builder().nome("Larissa Santos").email("larissa.santos@sysanalytics.com.br")
+                Vendedor.builder().empresaId(empresaId).nome("Larissa Santos").email("larissa.santos@sysanalytics.com.br")
                         .telefone("(81) 99654-7788").carteira("Norte/Nordeste/Centro-Oeste - Distribuição").build()
         ));
     }
 
+    // ------------------------------------------------------------------ usuários
+
+    /** Um admin, um gestor e um login por vendedor (cada um enxerga só a sua carteira). */
+    private void criarUsuarios(Long empresaId, List<Vendedor> vendedores) {
+        String hash = passwordEncoder.encode(senhaPadrao);
+        List<Usuario> usuarios = new ArrayList<>();
+        usuarios.add(usuario(empresaId, "Administrador Demo", "admin@demo.com", hash, com.sysanalytics.crm.domain.Perfil.ADMIN, null));
+        usuarios.add(usuario(empresaId, "Gestor Comercial Demo", "gestor@demo.com", hash, com.sysanalytics.crm.domain.Perfil.GESTOR, null));
+        for (Vendedor v : vendedores) {
+            usuarios.add(usuario(empresaId, v.getNome(), v.getEmail(), hash, com.sysanalytics.crm.domain.Perfil.VENDEDOR, v.getId()));
+        }
+        usuarioRepository.saveAll(usuarios);
+        log.info("DataSeeder: logins demo criados (senha padrão configurada em crm.seed.senha-padrao): {}",
+                usuarios.stream().map(Usuario::getEmail).toList());
+    }
+
+    private static Usuario usuario(Long empresaId, String nome, String email, String hash, com.sysanalytics.crm.domain.Perfil perfil, Long vendedorId) {
+        return Usuario.builder().empresaId(empresaId).nome(nome).email(email).senhaHash(hash)
+                .perfil(perfil).vendedorId(vendedorId).ativo(true).criadoEm(OffsetDateTime.now()).build();
+    }
+
     // ------------------------------------------------------------------ clientes
 
-    private List<Cliente> criarClientes(List<Vendedor> vendedores, LocalDate hoje) {
+    private List<Cliente> criarClientes(Long empresaId, List<Vendedor> vendedores, LocalDate hoje) {
         Map<String, Vendedor> porCarteira = Map.of(
                 "SUDESTE", vendedores.get(0), "SUL", vendedores.get(1), "OUTRAS", vendedores.get(2));
 
@@ -154,6 +195,7 @@ public class DataSeeder implements CommandLineRunner {
                     .replaceAll("[óôõ]", "o").replaceAll("[ú]", "u").replaceAll("[ç]", "c")
                     .replaceAll("[^a-z0-9]", "");
             clientes.add(Cliente.builder()
+                    .empresaId(empresaId)
                     .cnpj(gerarCnpj())
                     .nomeFantasia(m.fantasia())
                     .razaoSocial(m.razao())
@@ -167,12 +209,19 @@ public class DataSeeder implements CommandLineRunner {
                     .vendedor(vendedor)
                     .build());
         }
-        return clienteRepository.saveAll(clientes);
+        List<Cliente> salvos = clienteRepository.saveAll(clientes);
+        // contato principal de cada cliente (mesma regra da migração V2 para bases existentes)
+        contatoRepository.saveAll(salvos.stream()
+                .map(c -> Contato.builder().empresaId(empresaId).clienteId(c.getId()).nome(c.getContato())
+                        .email(c.getEmail()).telefone(c.getTelefone())
+                        .principal(true).ativo(true).criadoEm(OffsetDateTime.now()).build())
+                .toList());
+        return salvos;
     }
 
     // ------------------------------------------------------------------ faturamento
 
-    private int gerarFaturamentos(List<Cliente> clientes, LocalDate hoje) {
+    private int gerarFaturamentos(Long empresaId, List<Cliente> clientes, LocalDate hoje) {
         List<Faturamento> notas = new ArrayList<>();
 
         for (int i = 0; i < clientes.size(); i++) {
@@ -193,6 +242,7 @@ public class DataSeeder implements CommandLineRunner {
                 // A última compra mantém a data exata; as demais caem sempre em dia útil
                 LocalDate dataNota = primeira ? data : diaUtil(data);
                 notas.add(Faturamento.builder()
+                        .empresaId(empresaId)
                         .dataFaturamento(dataNota)
                         .valorTotal(valorNota(mock.porte(), dataNota))
                         .cliente(cliente)
@@ -226,7 +276,7 @@ public class DataSeeder implements CommandLineRunner {
 
     // ------------------------------------------------------------------ custos
 
-    private int gerarCustos(LocalDate hoje) {
+    private int gerarCustos(Long empresaId, LocalDate hoje) {
         List<Custo> custos = new ArrayList<>();
         LocalDate inicio = hoje.minusMonths(12).withDayOfMonth(1);
 
@@ -234,36 +284,37 @@ public class DataSeeder implements CommandLineRunner {
         for (LocalDate mes = inicio; !mes.isAfter(hoje); mes = mes.plusMonths(1)) {
             LocalDate dia = mes.withDayOfMonth(5);
             if (dia.isAfter(hoje)) break;
-            custos.add(custo("Folha de pagamento", "Pessoal", TipoCusto.FIXO, Periodicidade.MENSAL, dia, 168_000 + rnd.nextInt(6_000)));
-            custos.add(custo("Aluguel do centro de distribuição", "Infraestrutura", TipoCusto.FIXO, Periodicidade.MENSAL, dia, 38_000));
-            custos.add(custo("Licenças ERP/CRM e cloud", "Tecnologia", TipoCusto.FIXO, Periodicidade.MENSAL, dia, 6_800));
-            custos.add(custo("Honorários contábeis", "Administrativo", TipoCusto.FIXO, Periodicidade.MENSAL, dia, 4_900));
-            custos.add(custo("Seguros patrimoniais e de frota", "Administrativo", TipoCusto.FIXO, Periodicidade.MENSAL, dia, 3_400));
-            custos.add(custo("Energia elétrica", "Utilidades", TipoCusto.VARIAVEL, Periodicidade.MENSAL, dia, entre(9_000, 14_500)));
+            custos.add(custo(empresaId, "Folha de pagamento", "Pessoal", TipoCusto.FIXO, Periodicidade.MENSAL, dia, 168_000 + rnd.nextInt(6_000)));
+            custos.add(custo(empresaId, "Aluguel do centro de distribuição", "Infraestrutura", TipoCusto.FIXO, Periodicidade.MENSAL, dia, 38_000));
+            custos.add(custo(empresaId, "Licenças ERP/CRM e cloud", "Tecnologia", TipoCusto.FIXO, Periodicidade.MENSAL, dia, 6_800));
+            custos.add(custo(empresaId, "Honorários contábeis", "Administrativo", TipoCusto.FIXO, Periodicidade.MENSAL, dia, 4_900));
+            custos.add(custo(empresaId, "Seguros patrimoniais e de frota", "Administrativo", TipoCusto.FIXO, Periodicidade.MENSAL, dia, 3_400));
+            custos.add(custo(empresaId, "Energia elétrica", "Utilidades", TipoCusto.VARIAVEL, Periodicidade.MENSAL, dia, entre(9_000, 14_500)));
         }
 
         // Semanais (segunda-feira)
         for (LocalDate seg = inicio.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY));
              !seg.isAfter(hoje); seg = seg.plusWeeks(1)) {
-            custos.add(custo("Frete e transportadoras", "Logística", TipoCusto.VARIAVEL, Periodicidade.SEMANAL, seg, entre(9_000, 15_000)));
-            custos.add(custo("Manutenção de frota", "Logística", TipoCusto.VARIAVEL, Periodicidade.SEMANAL, seg, entre(3_500, 7_000)));
-            custos.add(custo("Marketing digital", "Comercial", TipoCusto.VARIAVEL, Periodicidade.SEMANAL, seg, entre(2_500, 4_200)));
+            custos.add(custo(empresaId, "Frete e transportadoras", "Logística", TipoCusto.VARIAVEL, Periodicidade.SEMANAL, seg, entre(9_000, 15_000)));
+            custos.add(custo(empresaId, "Manutenção de frota", "Logística", TipoCusto.VARIAVEL, Periodicidade.SEMANAL, seg, entre(3_500, 7_000)));
+            custos.add(custo(empresaId, "Marketing digital", "Comercial", TipoCusto.VARIAVEL, Periodicidade.SEMANAL, seg, entre(2_500, 4_200)));
         }
 
         // Diários (dias úteis)
         for (LocalDate dia = inicio; !dia.isAfter(hoje); dia = dia.plusDays(1)) {
             if (dia.getDayOfWeek() == DayOfWeek.SATURDAY || dia.getDayOfWeek() == DayOfWeek.SUNDAY) continue;
-            custos.add(custo("Combustível", "Logística", TipoCusto.VARIAVEL, Periodicidade.DIARIO, dia, entre(650, 1_150)));
-            custos.add(custo("Embalagens e material de consumo", "Operacional", TipoCusto.VARIAVEL, Periodicidade.DIARIO, dia, entre(380, 900)));
+            custos.add(custo(empresaId, "Combustível", "Logística", TipoCusto.VARIAVEL, Periodicidade.DIARIO, dia, entre(650, 1_150)));
+            custos.add(custo(empresaId, "Embalagens e material de consumo", "Operacional", TipoCusto.VARIAVEL, Periodicidade.DIARIO, dia, entre(380, 900)));
         }
 
         custoRepository.saveAll(custos);
         return custos.size();
     }
 
-    private Custo custo(String descricao, String categoria, TipoCusto tipo, Periodicidade periodicidade,
+    private Custo custo(Long empresaId, String descricao, String categoria, TipoCusto tipo, Periodicidade periodicidade,
                         LocalDate data, double valor) {
         return Custo.builder()
+                .empresaId(empresaId)
                 .descricao(descricao)
                 .categoria(categoria)
                 .tipo(tipo)

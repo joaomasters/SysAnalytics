@@ -1,6 +1,8 @@
 package com.sysanalytics.crm.web;
 
+import com.sysanalytics.crm.security.CredenciaisInvalidasException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -21,6 +23,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({IllegalArgumentException.class, MethodArgumentTypeMismatchException.class})
     public ProblemDetail badRequest(Exception e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
+    @ExceptionHandler(CredenciaisInvalidasException.class)
+    public ProblemDetail naoAutorizado(CredenciaisInvalidasException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, e.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ProblemDetail validacao(MethodArgumentNotValidException e) {
+        String detalhe = e.getBindingResult().getFieldErrors().stream()
+                .map(f -> f.getDefaultMessage())
+                .distinct()
+                .collect(java.util.stream.Collectors.joining("; "));
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                detalhe.isBlank() ? "Dados inválidos na requisição" : detalhe);
     }
 
     @ExceptionHandler(IllegalStateException.class)

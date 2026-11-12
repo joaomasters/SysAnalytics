@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
+import java.sql.Types;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -67,11 +68,19 @@ public class AnaliseInatividadeJobConfig {
 
     @Bean
     @StepScope
-    public JdbcCursorItemReader<ClienteSituacao> clientesInativosReader(DataSource dataSource) {
+    public JdbcCursorItemReader<ClienteSituacao> clientesInativosReader(
+            DataSource dataSource,
+            @Value("#{jobParameters['empresaId']}") Long empresaId) {
         return new JdbcCursorItemReaderBuilder<ClienteSituacao>()
                 .name("clientesInativosReader")
                 .dataSource(dataSource)
                 .sql(ConsultasAnaliticas.CLIENTES_INATIVOS)
+                // parâmetros: empresa_id e vendedor_id (NULL = todos, duas vezes)
+                .preparedStatementSetter(ps -> {
+                    ps.setLong(1, empresaId);
+                    ps.setNull(2, Types.BIGINT);
+                    ps.setNull(3, Types.BIGINT);
+                })
                 .rowMapper(ClienteSituacao.ROW_MAPPER)
                 .build();
     }
@@ -79,7 +88,8 @@ public class AnaliseInatividadeJobConfig {
     @Bean
     @StepScope
     public ItemProcessor<ClienteSituacao, ClienteInatividadeEvent> classificarRiscoProcessor(
-            @Value("#{jobParameters['dataReferencia']}") LocalDate dataReferencia) {
+            @Value("#{jobParameters['dataReferencia']}") LocalDate dataReferencia,
+            @Value("#{jobParameters['empresaId']}") Long empresaId) {
         LocalDate referencia = dataReferencia != null ? dataReferencia : LocalDate.now();
         return situacao -> {
             if (situacao.nivel() == NivelRisco.SEM_RISCO) {
@@ -87,6 +97,7 @@ public class AnaliseInatividadeJobConfig {
             }
             return new ClienteInatividadeEvent(
                     UUID.randomUUID(),
+                    empresaId,
                     situacao.clienteId(),
                     situacao.nomeFantasia(),
                     situacao.cnpj(),

@@ -1,8 +1,9 @@
 import { Loader2, PlayCircle, Search, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { mensagemDeErro } from '@/api/client'
 import type { ExecucaoJob, NivelRisco } from '@/api/types'
+import { useAuth } from '@/auth/AuthContext'
 import { NIVEIS_RISCO, RiscoBadge } from '@/components/RiscoBadge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -35,6 +36,8 @@ export function ClientesPage() {
 
   const { data: clientes, isLoading, isError, error, isFetching } = useClientes(niveis, buscaDebounced)
   const analise = useExecutarAnaliseInatividade()
+  const { temPerfil } = useAuth()
+  const podeAnalisar = temPerfil('GESTOR', 'ADMIN') // a API de jobs é restrita à gestão
 
   const alternarNivel = (nivel: NivelRisco) => {
     const proximo = niveis.includes(nivel) ? niveis.filter((n) => n !== nivel) : [...niveis, nivel]
@@ -53,10 +56,12 @@ export function ClientesPage() {
             <strong>Crítico</strong> 90+
           </p>
         </div>
-        <Button size="lg" onClick={() => analise.mutate()} disabled={analise.isPending}>
-          {analise.isPending ? <Loader2 className="animate-spin" /> : <PlayCircle />}
-          {analise.isPending ? 'Analisando carteira...' : 'Executar Análise de Inatividade'}
-        </Button>
+        {podeAnalisar && (
+          <Button size="lg" onClick={() => analise.mutate()} disabled={analise.isPending}>
+            {analise.isPending ? <Loader2 className="animate-spin" /> : <PlayCircle />}
+            {analise.isPending ? 'Analisando carteira...' : 'Executar Análise de Inatividade'}
+          </Button>
+        )}
       </div>
 
       {analise.isError && (
@@ -149,7 +154,12 @@ export function ClientesPage() {
                 {clientes?.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell>
-                      <p className="font-semibold">{c.nomeFantasia}</p>
+                      <Link
+                        to={`/clientes/${c.id}`}
+                        className="font-semibold hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        {c.nomeFantasia}
+                      </Link>
                       <p className="text-xs text-muted-foreground">
                         {c.cnpj} · {c.cidade}/{c.uf} · {c.segmento}
                       </p>

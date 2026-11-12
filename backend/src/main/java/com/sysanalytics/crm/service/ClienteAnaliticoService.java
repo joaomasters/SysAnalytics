@@ -18,22 +18,30 @@ public class ClienteAnaliticoService {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public List<ClienteSituacao> situacaoClientes() {
-        return jdbcTemplate.query(ConsultasAnaliticas.SITUACAO_CLIENTES, ClienteSituacao.ROW_MAPPER);
+    /**
+     * @param empresaId  tenant (obrigatório)
+     * @param vendedorId restringe à carteira de um vendedor; {@code null} = empresa toda
+     */
+    public List<ClienteSituacao> situacaoClientes(Long empresaId, Long vendedorId) {
+        return jdbcTemplate.query(ConsultasAnaliticas.SITUACAO_CLIENTES, ClienteSituacao.ROW_MAPPER,
+                empresaId, vendedorId, vendedorId);
     }
 
     /**
      * Lista clientes com a régua de churn aplicada.
      *
+     * @param empresaId     tenant (obrigatório)
+     * @param vendedorId    restringe à carteira de um vendedor ({@code null} = sem restrição)
      * @param niveis        filtro por nível de risco (vazio = todos)
      * @param busca         busca textual em nome fantasia, razão social ou CNPJ
      * @param apenasEmRisco se true, devolve apenas Alerta/Atenção/Crítico
      */
-    public List<ClienteRiscoResponse> listar(Collection<NivelRisco> niveis, String busca, boolean apenasEmRisco) {
+    public List<ClienteRiscoResponse> listar(Long empresaId, Long vendedorId,
+                                             Collection<NivelRisco> niveis, String busca, boolean apenasEmRisco) {
         String termo = busca == null ? "" : normalizar(busca.trim());
         String termoDigitos = termo.replaceAll("\\D", "");
 
-        return situacaoClientes().stream()
+        return situacaoClientes(empresaId, vendedorId).stream()
                 .filter(s -> !apenasEmRisco || s.nivel() != NivelRisco.SEM_RISCO)
                 .filter(s -> niveis == null || niveis.isEmpty() || niveis.contains(s.nivel()))
                 .filter(s -> termo.isEmpty()
@@ -47,10 +55,10 @@ public class ClienteAnaliticoService {
                 .toList();
     }
 
-    public Map<NivelRisco, Long> contagemPorNivel() {
+    public Map<NivelRisco, Long> contagemPorNivel(Long empresaId, Long vendedorId) {
         Map<NivelRisco, Long> contagem = new EnumMap<>(NivelRisco.class);
         Arrays.stream(NivelRisco.values()).forEach(n -> contagem.put(n, 0L));
-        contagem.putAll(situacaoClientes().stream()
+        contagem.putAll(situacaoClientes(empresaId, vendedorId).stream()
                 .collect(Collectors.groupingBy(ClienteSituacao::nivel, Collectors.counting())));
         return contagem;
     }

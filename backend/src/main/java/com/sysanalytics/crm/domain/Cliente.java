@@ -18,7 +18,11 @@ public class Cliente {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 18, unique = true)
+    /** Empresa (tenant) dona do registro. Toda consulta deve filtrar por ela. */
+    @Column(name = "empresa_id", nullable = false, updatable = false)
+    private Long empresaId;
+
+    @Column(nullable = false, length = 18)
     private String cnpj;
 
     @Column(name = "razao_social", nullable = false, length = 160)
