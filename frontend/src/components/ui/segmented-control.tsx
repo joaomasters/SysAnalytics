@@ -12,10 +12,10 @@ interface Props<T extends string> {
   ariaLabel: string
 }
 
-/** Grupo de botões exclusivos (equivalente ao ToggleGroup/Tabs do shadcn). */
+/** Alternância exclusiva no estilo "pivot": o item ativo ganha sublinhado azul. */
 export function SegmentedControl<T extends string>({ opcoes, valor, onChange, ariaLabel }: Props<T>) {
   return (
-    <div role="radiogroup" aria-label={ariaLabel} className="inline-flex max-w-full self-start overflow-x-auto rounded-lg border bg-muted p-1">
+    <div role="radiogroup" aria-label={ariaLabel} className="inline-flex max-w-full self-start overflow-x-auto rounded-sm border bg-card">
       {opcoes.map((o) => {
         const ativo = o.valor === valor
         return (
@@ -26,8 +26,10 @@ export function SegmentedControl<T extends string>({ opcoes, valor, onChange, ar
             aria-checked={ativo}
             onClick={() => onChange(o.valor)}
             className={cn(
-              'rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-              ativo ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+              'relative h-8 whitespace-nowrap border-r px-3 text-sm transition-colors last:border-r-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+              ativo
+                ? 'bg-accent font-semibold text-accent-foreground after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-primary'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground',
             )}
           >
             {o.rotulo}

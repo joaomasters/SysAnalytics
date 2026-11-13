@@ -263,3 +263,115 @@ export interface FunilResumo {
   valorGanhoNoMes: number
   taxaConversao90d: number | null
 }
+
+export interface Produto {
+  id: number
+  codigo: string
+  nome: string
+  descricao: string | null
+  unidade: string
+  precoUnitario: number
+  ativo: boolean
+}
+
+export interface ProdutoInput {
+  codigo: string
+  nome: string
+  descricao?: string
+  unidade: string
+  precoUnitario: number
+  ativo?: boolean
+}
+
+export type StatusProposta = 'RASCUNHO' | 'ENVIADA' | 'ACEITA' | 'RECUSADA'
+
+export interface ItemProposta {
+  id: number
+  produtoId: number | null
+  descricao: string
+  unidade: string
+  quantidade: number
+  precoUnitario: number
+  descontoPercentual: number
+  total: number
+}
+
+export interface ItemPropostaInput {
+  produtoId?: number | null
+  descricao: string
+  unidade: string
+  quantidade: number
+  precoUnitario: number
+  descontoPercentual: number
+}
+
+export interface PropostaResumo {
+  id: number
+  numero: string
+  status: StatusProposta
+  validadeAte: string | null
+  total: number
+  criadaPor: string
+  criadaEm: string
+}
+
+export interface PropostaDetalhe {
+  id: number
+  numero: string
+  status: StatusProposta
+  oportunidadeId: number
+  oportunidadeTitulo: string
+  clienteId: number
+  clienteNome: string
+  clienteRazaoSocial: string
+  clienteCnpj: string
+  contatoNome: string | null
+  contatoEmail: string | null
+  empresaNome: string
+  elaboradaPor: string
+  validadeAte: string | null
+  condicoesPagamento: string | null
+  observacoes: string | null
+  itens: ItemProposta[]
+  subtotal: number
+  descontoTotal: number
+  total: number
+  criadaEm: string
+  atualizadaEm: string
+}
+
+export interface PropostaInput {
+  validadeAte?: string
+  condicoesPagamento?: string
+  observacoes?: string
+  itens: ItemPropostaInput[]
+}
+
+export type SituacaoMeta = 'SEM_META' | 'ATINGIDA' | 'NO_RITMO' | 'ABAIXO_DO_RITMO' | 'NAO_ATINGIDA' | 'PENDENTE'
+
+export interface MetaVendedor {
+  vendedorId: number | null
+  vendedorNome: string
+  carteira: string | null
+  meta: number | null
+  realizado: number
+  atingimento: number | null
+  ritmoEsperado: number | null
+  faltaParaMeta: number | null
+  previsaoFunil: number
+  atingimentoProjetado: number | null
+  situacao: SituacaoMeta
+}
+
+export interface MetaMes {
+  mes: string
+  diasNoMes: number
+  diasDecorridos: number
+  total: MetaVendedor
+  vendedores: MetaVendedor[]
+}
+
+export interface MetaItem {
+  vendedorId: number
+  valor: number | null
+}

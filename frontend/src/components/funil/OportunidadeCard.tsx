@@ -6,6 +6,7 @@ import type { MotivoPerda, Oportunidade } from '@/api/types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { InputMascarado } from '@/components/ui/input-mascarado'
 import { useAtualizarOportunidade, useMoverOportunidade } from '@/hooks/queries'
 import { formatBRL, formatData } from '@/lib/format'
 import { CLASSE_CAMPO, ETAPAS_ABERTAS, MOTIVOS_PERDA } from '@/lib/rotulos'
@@ -48,25 +49,24 @@ export function OportunidadeCard({ oportunidade: o }: { oportunidade: Oportunida
     <li className="space-y-2 rounded-md border bg-card p-3 shadow-sm">
       {modo === 'editar' ? (
         <form onSubmit={salvarEdicao} className="space-y-2">
-          <Input aria-label="Título" required maxLength={160} value={titulo} onChange={(e) => setTitulo(e.target.value)} />
+          <InputMascarado aria-label="Título" mascara="texto" tamanho={160} required value={titulo} onValueChange={setTitulo} />
           <div className="grid grid-cols-2 gap-2">
-            <Input
+            <InputMascarado
               aria-label="Valor estimado"
-              type="number"
+              mascara="moeda"
+              permitirZero
               required
-              min={0}
-              step="0.01"
               value={valor}
-              onChange={(e) => setValor(e.target.value)}
+              onValueChange={setValor}
             />
-            <Input
+            <InputMascarado
               aria-label="Probabilidade (%)"
-              type="number"
-              required
-              min={0}
+              mascara="inteiro"
               max={100}
+              required
+              placeholder="% prob."
               value={prob}
-              onChange={(e) => setProb(e.target.value)}
+              onValueChange={setProb}
             />
           </div>
           <Input aria-label="Previsão de fechamento" type="date" value={previsao} onChange={(e) => setPrevisao(e.target.value)} />
@@ -82,7 +82,9 @@ export function OportunidadeCard({ oportunidade: o }: { oportunidade: Oportunida
       ) : (
         <>
           <div className="flex items-start justify-between gap-2">
-            <p className="text-sm font-semibold leading-snug">{o.titulo}</p>
+            <Link to={`/oportunidades/${o.id}`} className="text-sm font-semibold leading-snug hover:underline">
+              {o.titulo}
+            </Link>
             <Button variant="ghost" size="icon" className="-mr-2 -mt-1 h-7 w-7" aria-label={`Editar ${o.titulo}`} onClick={() => setModo('editar')}>
               <Pencil />
             </Button>

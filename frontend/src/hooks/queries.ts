@@ -5,11 +5,15 @@ import type {
   ContatoInput,
   Granularidade,
   InteracaoInput,
+  MetaItem,
   MoverOportunidadeInput,
   NivelRisco,
   OportunidadeEdicaoInput,
   OportunidadeInput,
+  ProdutoInput,
+  PropostaInput,
   SituacaoOportunidade,
+  StatusProposta,
   StatusTarefa,
   TarefaInput,
 } from '@/api/types'
@@ -17,7 +21,8 @@ import type {
 export const queryKeys = {
   kpis: (g: Granularidade) => ['kpis', g] as const,
   clientes: (niveis: NivelRisco[], busca: string) => ['clientes', { niveis, busca }] as const,
-  notificacoes: (apenasNaoLidas: boolean) => ['notificacoes', 'lista', { apenasNaoLidas }] as const,
+  notificacoes: (apenasNaoLidas: boolean, pagina: number, tamanho: number) =>
+    ['notificacoes', 'lista', { apenasNaoLidas, pagina, tamanho }] as const,
   contagemNaoLidas: ['notificacoes', 'contagem'] as const,
   cliente: (id: number) => ['cliente', id] as const,
   interacoes: (clienteId: number) => ['interacoes', clienteId] as const,
@@ -170,12 +175,88 @@ export function useMoverOportunidade() {
   })
 }
 
-/** O feed é alimentado de forma assíncrona pelo RabbitMQ, por isso fazemos polling leve. */
-export function useNotificacoes(apenasNaoLidas = false) {
+export function useOportunidade(id: number) {
   return useQuery({
-    queryKey: queryKeys.notificacoes(apenasNaoLidas),
-    queryFn: () => api.notificacoes(apenasNaoLidas),
+    queryKey: ['oportunidades', 'detalhe', id] as const,
+    queryFn: () => api.oportunidade(id),
+    enabled: Number.isFinite(id),
+    retry: false,
+  })
+}
+
+export function useProdutos(busca: string, incluirInativos = false) {
+  return useQuery({
+    queryKey: ['produtos', { busca, incluirInativos }] as const,
+    queryFn: () => api.produtos(busca, incluirInativos),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useSalvarProduto() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, dados }: { id?: number; dados: ProdutoInput }) =>
+      id ? api.atualizarProduto(id, dados) : api.criarProduto(dados),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['produtos'] }),
+  })
+}
+
+export function usePropostas(oportunidadeId: number) {
+  return useQuery({
+    queryKey: ['propostas', 'lista', oportunidadeId] as const,
+    queryFn: () => api.propostas(oportunidadeId),
+    enabled: Number.isFinite(oportunidadeId),
+  })
+}
+
+export function useProposta(id: number) {
+  return useQuery({
+    queryKey: ['propostas', 'detalhe', id] as const,
+    queryFn: () => api.proposta(id),
+    enabled: Number.isFinite(id),
+    retry: false,
+  })
+}
+
+/** Enviar uma proposta muda o valor/etapa da oportunidade, então as duas famílias de dados são recarregadas. */
+function useInvalidarPropostas() {
+  const qc = useQueryClient()
+  return () => {
+    qc.invalidateQueries({ queryKey: ['propostas'] })
+    qc.invalidateQueries({ queryKey: ['oportunidades'] })
+  }
+}
+
+export function useCriarProposta(oportunidadeId: number) {
+  const invalidar = useInvalidarPropostas()
+  return useMutation({
+    mutationFn: (dados: PropostaInput) => api.criarProposta(oportunidadeId, dados),
+    onSuccess: invalidar,
+  })
+}
+
+export function useAtualizarProposta(id: number) {
+  const invalidar = useInvalidarPropostas()
+  return useMutation({ mutationFn: (dados: PropostaInput) => api.atualizarProposta(id, dados), onSuccess: invalidar })
+}
+
+export function useStatusProposta(id: number) {
+  const invalidar = useInvalidarPropostas()
+  return useMutation({ mutationFn: (status: StatusProposta) => api.statusProposta(id, status), onSuccess: invalidar })
+}
+
+export function useExcluirProposta(id: number) {
+  const invalidar = useInvalidarPropostas()
+  return useMutation({ mutationFn: () => api.excluirProposta(id), onSuccess: invalidar })
+}
+
+/** O feed é alimentado de forma assíncrona pelo RabbitMQ, por isso fazemos polling leve. */
+export function useNotificacoes(apenasNaoLidas = false, pagina = 0, tamanho = 100) {
+  return useQuery({
+    queryKey: queryKeys.notificacoes(apenasNaoLidas, pagina, tamanho),
+    queryFn: () => api.notificacoes(apenasNaoLidas, pagina, tamanho),
     refetchInterval: 10_000,
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -216,5 +297,21 @@ export function useExecutarAnaliseInatividade() {
       qc.invalidateQueries({ queryKey: ['notificacoes'] })
       setTimeout(() => qc.invalidateQueries({ queryKey: ['notificacoes'] }), 1500)
     },
+  })
+}
+
+export function useMetas(mes: string) {
+  return useQuery({
+    queryKey: ['metas', mes] as const,
+    queryFn: () => api.metas(mes),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useSalvarMetas(mes: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (metas: MetaItem[]) => api.salvarMetas(mes, metas),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['metas'] }),
   })
 }

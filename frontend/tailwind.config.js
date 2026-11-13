@@ -8,7 +8,7 @@ export default {
     container: { center: true, padding: '1rem' },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['Segoe UI Variable Text', 'Segoe UI', 'Inter', 'system-ui', 'Roboto', 'sans-serif'],
       },
       colors: {
         border: 'hsl(var(--border))',
@@ -22,7 +22,13 @@ export default {
         muted: { DEFAULT: 'hsl(var(--muted))', foreground: 'hsl(var(--muted-foreground))' },
         accent: { DEFAULT: 'hsl(var(--accent))', foreground: 'hsl(var(--accent-foreground))' },
         card: { DEFAULT: 'hsl(var(--card))', foreground: 'hsl(var(--card-foreground))' },
+        topbar: { DEFAULT: 'hsl(var(--topbar))', foreground: 'hsl(var(--topbar-foreground))' },
+        nav: { DEFAULT: 'hsl(var(--nav))', hover: 'hsl(var(--nav-hover))' },
         popover: { DEFAULT: 'hsl(var(--popover))', foreground: 'hsl(var(--popover-foreground))' },
+      },
+      boxShadow: {
+        card: '0 1.6px 3.6px rgba(0,0,0,0.08), 0 0.3px 0.9px rgba(0,0,0,0.06)',
+        flutuante: '0 6.4px 14.4px rgba(0,0,0,0.16), 0 1.2px 3.6px rgba(0,0,0,0.12)',
       },
       borderRadius: {
         lg: 'var(--radius)',

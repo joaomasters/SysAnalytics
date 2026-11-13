@@ -8,11 +8,14 @@ import { OportunidadeCard } from '@/components/funil/OportunidadeCard'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { InputMascarado } from '@/components/ui/input-mascarado'
+import { Paginacao } from '@/components/ui/paginacao'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useClientes, useCriarOportunidade, useFunilResumo, useOportunidades } from '@/hooks/queries'
 import { formatBRL, formatPercentual } from '@/lib/format'
+import { usePaginacao } from '@/lib/usePaginacao'
 import { CLASSE_CAMPO, ETAPAS_ABERTAS, rotuloMotivo } from '@/lib/rotulos'
 
 export function FunilPage() {
@@ -25,12 +28,15 @@ export function FunilPage() {
 
   const resumo = useFunilResumo(somenteMinhas)
   const lista = useOportunidades(situacao, somenteMinhas)
+  // Colunas do quadro mostram 6 cartões e liberam mais sob demanda; Ganhas/Perdidas usam paginação de tabela.
+  const [limites, setLimites] = useState<Record<string, number>>({})
+  const pgEncerradas = usePaginacao(situacao === 'ABERTA' ? undefined : lista.data, 10, `${situacao}|${escopo}`)
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="mx-auto max-w-[1440px] space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Funil de vendas</h2>
+          <h2 className="text-xl font-semibold">Funil de vendas</h2>
           <p className="text-sm text-muted-foreground">
             Acompanhe cada oportunidade da prospecção ao fechamento. A previsão pondera o valor pela probabilidade.
           </p>
@@ -93,6 +99,7 @@ export function FunilPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {ETAPAS_ABERTAS.map((etapa) => {
             const itens = lista.data?.filter((o) => o.etapa === etapa.valor) ?? []
+            const limite = limites[etapa.valor] ?? 6
             const r = resumo.data?.etapas.find((x) => x.etapa === etapa.valor)
             return (
               <section key={etapa.valor} aria-label={etapa.rotulo} className="flex flex-col rounded-lg border bg-muted/30">
@@ -109,9 +116,21 @@ export function FunilPage() {
                   {!lista.isLoading && itens.length === 0 && (
                     <li className="py-6 text-center text-xs text-muted-foreground">Nenhuma oportunidade</li>
                   )}
-                  {itens.map((o) => (
+                  {itens.slice(0, limite).map((o) => (
                     <OportunidadeCard key={o.id} oportunidade={o} />
                   ))}
+                  {itens.length > limite && (
+                    <li>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-primary"
+                        onClick={() => setLimites((l) => ({ ...l, [etapa.valor]: limite + 6 }))}
+                      >
+                        Mostrar mais ({itens.length - limite})
+                      </Button>
+                    </li>
+                  )}
                 </ul>
               </section>
             )
@@ -143,10 +162,12 @@ export function FunilPage() {
                     </TableCell>
                   </TableRow>
                 )}
-                {lista.data?.map((o) => (
+                {pgEncerradas.visiveis.map((o) => (
                   <TableRow key={o.id}>
                     <TableCell>
-                      <p className="font-semibold">{o.titulo}</p>
+                      <Link to={`/oportunidades/${o.id}`} className="font-semibold hover:underline">
+                        {o.titulo}
+                      </Link>
                       <Link to={`/clientes/${o.clienteId}`} className="text-xs text-muted-foreground hover:underline">
                         {o.clienteNome}
                       </Link>
@@ -159,6 +180,14 @@ export function FunilPage() {
                 ))}
               </TableBody>
             </Table>
+            <Paginacao
+              pagina={pgEncerradas.pagina}
+              tamanho={pgEncerradas.tamanho}
+              total={pgEncerradas.total}
+              onPagina={pgEncerradas.setPagina}
+              onTamanho={pgEncerradas.setTamanho}
+              rotulo="oportunidades"
+            />
           </CardContent>
         </Card>
       )}
@@ -170,7 +199,7 @@ function Indicador({ rotulo, valor, detalhe }: { rotulo: string; valor: string |
   return (
     <Card>
       <CardContent className="p-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{rotulo}</p>
+        <p className="text-xs font-semibold text-muted-foreground">{rotulo}</p>
         {valor === null ? <Skeleton className="mt-2 h-7 w-28" /> : <p className="mt-1 text-xl font-bold tabular-nums">{valor}</p>}
         {detalhe && <p className="text-xs text-muted-foreground">{detalhe}</p>}
       </CardContent>
@@ -242,20 +271,19 @@ function NovaOportunidade({ onFechar }: { onFechar: () => void }) {
               <label htmlFor="o-titulo" className="text-sm font-medium">
                 Título *
               </label>
-              <Input id="o-titulo" required maxLength={160} value={titulo} onChange={(e) => setTitulo(e.target.value)} />
+              <InputMascarado id="o-titulo" mascara="texto" tamanho={160} required value={titulo} onValueChange={setTitulo} />
             </div>
             <div className="space-y-1.5">
               <label htmlFor="o-valor" className="text-sm font-medium">
                 Valor estimado (R$) *
               </label>
-              <Input
+              <InputMascarado
                 id="o-valor"
-                type="number"
+                mascara="moeda"
                 required
-                min={0}
-                step="0.01"
+                placeholder="0,00"
                 value={valor}
-                onChange={(e) => setValor(e.target.value)}
+                onValueChange={setValor}
               />
             </div>
             <div className="space-y-1.5">

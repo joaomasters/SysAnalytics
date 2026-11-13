@@ -1,4 +1,4 @@
-import type { EtapaOportunidade, MotivoPerda, ResultadoTarefa, TipoInteracao } from '@/api/types'
+import type { EtapaOportunidade, MotivoPerda, ResultadoTarefa, StatusProposta, TipoInteracao } from '@/api/types'
 
 export const TIPOS_INTERACAO: { valor: TipoInteracao; rotulo: string }[] = [
   { valor: 'LIGACAO', rotulo: 'Ligação' },
@@ -24,6 +24,16 @@ export const ETAPAS_ABERTAS: { valor: EtapaOportunidade; rotulo: string; descric
   { valor: 'NEGOCIACAO', rotulo: 'Negociação', descricao: 'Ajustando condições' },
 ]
 
+export const rotuloEtapa = (e: EtapaOportunidade): string =>
+  e === 'GANHA' ? 'Ganha' : e === 'PERDIDA' ? 'Perdida' : (ETAPAS_ABERTAS.find((x) => x.valor === e)?.rotulo ?? e)
+
+export const STATUS_PROPOSTA: Record<StatusProposta, { rotulo: string; variant: 'neutro' | 'alerta' | 'ok' | 'critico' }> = {
+  RASCUNHO: { rotulo: 'Rascunho', variant: 'neutro' },
+  ENVIADA: { rotulo: 'Enviada', variant: 'alerta' },
+  ACEITA: { rotulo: 'Aceita', variant: 'ok' },
+  RECUSADA: { rotulo: 'Recusada', variant: 'critico' },
+}
+
 export const MOTIVOS_PERDA: { valor: MotivoPerda; rotulo: string }[] = [
   { valor: 'PRECO', rotulo: 'Preço' },
   { valor: 'CONCORRENTE', rotulo: 'Escolheu concorrente' },
@@ -48,4 +58,4 @@ export function dataISO(diasAFrente = 0): string {
 
 /** Classes do <select>/<textarea> nativos, alinhadas ao componente Input. */
 export const CLASSE_CAMPO =
-  'flex w-full rounded-md border border-input bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+  'flex w-full rounded-sm border border-input bg-card px-2.5 py-1.5 text-sm hover:border-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'

@@ -6,41 +6,65 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
+    /* Paleta "Dynamics": azul de marca sóbrio, neutros frios e barra superior azul-marinho */
+    --background: 210 17% 96%;
+    --foreground: 210 24% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 210 24% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 213 67% 50%;
+    --popover-foreground: 210 24% 14%;
+    --primary: 208 85% 38%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 42%;
-    --accent: 210 40% 94%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 72% 51%;
+    --secondary: 210 20% 94%;
+    --secondary-foreground: 210 24% 14%;
+    --muted: 210 17% 95%;
+    --muted-foreground: 210 10% 38%;
+    --accent: 208 60% 94%;
+    --accent-foreground: 208 85% 28%;
+    --destructive: 0 68% 44%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 90%;
-    --input: 214 32% 88%;
-    --ring: 213 67% 50%;
-    --radius: 0.6rem;
+    --border: 210 14% 86%;
+    --input: 210 10% 62%;
+    --ring: 208 85% 38%;
+    --radius: 0.25rem;
 
-    /* Séries dos gráficos (paleta categórica validada) */
-    --chart-faturamento: #2a78d6;
-    --chart-custos: #eb6834;
-    --chart-saldo: #1baf7a;
-    --chart-grid: #e5e7eb;
-    --chart-axis: #6b7280;
+    /* Casca da aplicação */
+    --topbar: 213 62% 17%;
+    --topbar-foreground: 0 0% 100%;
+    --nav: 0 0% 100%;
+    --nav-hover: 210 17% 94%;
+
+    /* Séries dos gráficos */
+    --chart-faturamento: #0f6cbd;
+    --chart-custos: #ca5010;
+    --chart-saldo: #107c10;
+    --chart-grid: #e1e5ea;
+    --chart-axis: #5f6b7a;
   }
 
   * {
     @apply border-border;
   }
 
+  html {
+    font-size: 14px;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: 'tnum' 1;
+  }
+
+  h1, h2, h3 {
+    letter-spacing: -0.005em;
+  }
+}
+
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  body {
+    background: #fff;
   }
 }

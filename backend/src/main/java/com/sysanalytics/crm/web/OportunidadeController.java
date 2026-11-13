@@ -35,6 +35,12 @@ public class OportunidadeController {
         return service.resumo(somenteMinhas);
     }
 
+    @Operation(summary = "Detalhe de uma oportunidade")
+    @GetMapping("/{id}")
+    public OportunidadeResponse obter(@PathVariable Long id) {
+        return service.obter(id);
+    }
+
     @Operation(summary = "Cria uma oportunidade na etapa Prospecção")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

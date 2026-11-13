@@ -107,6 +107,7 @@ public class OportunidadeService {
     private final OportunidadeRepository repository;
     private final UsuarioRepository usuarioRepository;
     private final ClienteAcesso clienteAcesso;
+    private final OportunidadeAcesso oportunidadeAcesso;
 
     @Transactional(readOnly = true)
     public List<OportunidadeResponse> listar(SituacaoOportunidade situacao, boolean somenteMinhas, Long clienteId) {
@@ -114,6 +115,13 @@ public class OportunidadeService {
         Long responsavel = escopoResponsavel(u, somenteMinhas);
         return jdbcTemplate.query(LISTAR, MAPPER, u.empresaId(), situacao.name(), situacao.name(),
                 responsavel, responsavel, clienteId, clienteId);
+    }
+
+    @Transactional(readOnly = true)
+    public OportunidadeResponse obter(Long id) {
+        UsuarioLogado u = UsuarioLogado.atual();
+        oportunidadeAcesso.exigir(u, id);
+        return resposta(u.empresaId(), id);
     }
 
     @Transactional

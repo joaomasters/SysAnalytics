@@ -5,9 +5,11 @@ import type { StatusTarefa } from '@/api/types'
 import { useAuth } from '@/auth/AuthContext'
 import { TarefaItem } from '@/components/tarefas/TarefaItem'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Paginacao } from '@/components/ui/paginacao'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useTarefas } from '@/hooks/queries'
+import { usePaginacao } from '@/lib/usePaginacao'
 
 export function TarefasPage() {
   const { temPerfil } = useAuth()
@@ -15,14 +17,15 @@ export function TarefasPage() {
   const [status, setStatus] = useState<StatusTarefa>('ABERTA')
   const [escopo, setEscopo] = useState<'minhas' | 'todas'>(gestao ? 'todas' : 'minhas')
   const { data, isLoading, isError, error } = useTarefas(status, escopo === 'minhas')
+  const pg = usePaginacao(data, 10, `${status}|${escopo}`)
 
   const atrasadas = data?.filter((t) => t.atrasada).length ?? 0
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-[1440px] space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">{gestao ? 'Tarefas do time' : 'Minhas tarefas'}</h2>
+          <h2 className="text-xl font-semibold">{gestao ? 'Tarefas do time' : 'Minhas tarefas'}</h2>
           <p className="text-sm text-muted-foreground">
             Próximos passos com os clientes. Crie tarefas a partir de um alerta ou na página do cliente.
           </p>
@@ -80,7 +83,8 @@ export function TarefasPage() {
               </p>
             </div>
           )}
-          <ol className="divide-y">{data?.map((t) => <TarefaItem key={t.id} tarefa={t} />)}</ol>
+          <ol className="divide-y">{pg.visiveis.map((t) => <TarefaItem key={t.id} tarefa={t} />)}</ol>
+          <Paginacao pagina={pg.pagina} tamanho={pg.tamanho} total={pg.total} onPagina={pg.setPagina} onTamanho={pg.setTamanho} rotulo="tarefas" />
         </CardContent>
       </Card>
     </div>

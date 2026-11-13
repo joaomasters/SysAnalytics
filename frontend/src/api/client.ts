@@ -13,6 +13,14 @@ import type {
   Oportunidade,
   OportunidadeEdicaoInput,
   OportunidadeInput,
+  MetaItem,
+  MetaMes,
+  Produto,
+  ProdutoInput,
+  PropostaDetalhe,
+  PropostaInput,
+  PropostaResumo,
+  StatusProposta,
   Granularidade,
   KpiDashboard,
   LoginResposta,
@@ -154,10 +162,41 @@ export const api = {
   moverOportunidade: async (id: number, dados: MoverOportunidadeInput) =>
     (await http.patch<Oportunidade>(`/oportunidades/${id}/etapa`, dados)).data,
 
-  notificacoes: async (apenasNaoLidas = false) =>
+  oportunidade: async (id: number) => (await http.get<Oportunidade>(`/oportunidades/${id}`)).data,
+
+  metas: async (mes: string) => (await http.get<MetaMes>('/metas', { params: { mes } })).data,
+
+  salvarMetas: async (mes: string, metas: MetaItem[]) => (await http.put<MetaMes>(`/metas/${mes}`, { metas })).data,
+
+  produtos: async (busca: string, incluirInativos: boolean) =>
+    (await http.get<Produto[]>('/produtos', { params: { busca: busca || undefined, incluirInativos } })).data,
+
+  criarProduto: async (dados: ProdutoInput) => (await http.post<Produto>('/produtos', dados)).data,
+
+  atualizarProduto: async (id: number, dados: ProdutoInput) => (await http.put<Produto>(`/produtos/${id}`, dados)).data,
+
+  propostas: async (oportunidadeId: number) =>
+    (await http.get<PropostaResumo[]>(`/oportunidades/${oportunidadeId}/propostas`)).data,
+
+  proposta: async (id: number) => (await http.get<PropostaDetalhe>(`/propostas/${id}`)).data,
+
+  criarProposta: async (oportunidadeId: number, dados: PropostaInput) =>
+    (await http.post<PropostaDetalhe>(`/oportunidades/${oportunidadeId}/propostas`, dados)).data,
+
+  atualizarProposta: async (id: number, dados: PropostaInput) =>
+    (await http.put<PropostaDetalhe>(`/propostas/${id}`, dados)).data,
+
+  statusProposta: async (id: number, status: StatusProposta) =>
+    (await http.patch<PropostaDetalhe>(`/propostas/${id}/status`, { status })).data,
+
+  excluirProposta: async (id: number) => {
+    await http.delete(`/propostas/${id}`)
+  },
+
+  notificacoes: async (apenasNaoLidas = false, pagina = 0, tamanho = 100) =>
     (
       await http.get<Pagina<Notificacao>>('/notificacoes', {
-        params: { apenasNaoLidas, tamanho: 100 },
+        params: { apenasNaoLidas, pagina, tamanho },
       })
     ).data,
 

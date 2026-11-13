@@ -7,20 +7,24 @@ import { InteracoesCard, TarefasDoCliente } from '@/components/cliente/Relaciona
 import { RiscoBadge } from '@/components/RiscoBadge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { InputMascarado } from '@/components/ui/input-mascarado'
+import { Paginacao } from '@/components/ui/paginacao'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useCliente, useRemoverContato, useSalvarContato } from '@/hooks/queries'
 import { formatBRL, formatData } from '@/lib/format'
+import { formatarTelefone, mascaraCpfCnpj } from '@/lib/mascaras'
+import { usePaginacao } from '@/lib/usePaginacao'
 
 export function ClienteDetalhePage() {
   const { id } = useParams()
   const clienteId = Number(id)
   const { data, isLoading, isError, error } = useCliente(clienteId)
+  const notasPg = usePaginacao(data?.ultimasNotas, 5)
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-6xl space-y-4">
+      <div className="mx-auto max-w-[1440px] space-y-4">
         <Skeleton className="h-10 w-1/2" />
         <Skeleton className="h-32 w-full" />
         <Skeleton className="h-64 w-full" />
@@ -30,7 +34,7 @@ export function ClienteDetalhePage() {
 
   if (isError || !data) {
     return (
-      <div className="mx-auto max-w-6xl space-y-4">
+      <div className="mx-auto max-w-[1440px] space-y-4">
         <VoltarParaLista />
         <Card className="border-red-200 bg-red-50">
           <CardContent className="p-4 text-sm text-red-800">
@@ -44,14 +48,14 @@ export function ClienteDetalhePage() {
   const { resumo: c } = data
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-[1440px] space-y-6">
       <VoltarParaLista />
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">{c.nomeFantasia}</h2>
+          <h2 className="text-xl font-semibold">{c.nomeFantasia}</h2>
           <p className="text-sm text-muted-foreground">
-            {c.razaoSocial} · {c.cnpj}
+            {c.razaoSocial} · {mascaraCpfCnpj(c.cnpj)}
           </p>
         </div>
         <RiscoBadge nivel={c.nivelRisco} />
@@ -77,7 +81,7 @@ export function ClienteDetalhePage() {
             <Campo rotulo="Segmento" valor={c.segmento} />
             <Campo rotulo="Cidade/UF" valor={c.cidade ? `${c.cidade}/${c.uf ?? ''}` : null} />
             <Campo rotulo="E-mail" valor={data.email} />
-            <Campo rotulo="Telefone" valor={data.telefone} />
+            <Campo rotulo="Telefone" valor={formatarTelefone(data.telefone)} />
             <Campo rotulo="Cliente desde" valor={formatData(data.dataCadastro)} />
             <Campo rotulo="Vendedor" valor={`${c.vendedorNome} · ${c.carteira}`} />
           </CardContent>
@@ -113,7 +117,7 @@ export function ClienteDetalhePage() {
                   </TableCell>
                 </TableRow>
               )}
-              {data.ultimasNotas.map((n) => (
+              {notasPg.visiveis.map((n) => (
                 <TableRow key={n.numeroNota}>
                   <TableCell className="font-medium">{n.numeroNota}</TableCell>
                   <TableCell>{formatData(n.dataFaturamento)}</TableCell>
@@ -123,6 +127,7 @@ export function ClienteDetalhePage() {
             </TableBody>
           </Table>
         </CardContent>
+        <Paginacao pagina={notasPg.pagina} tamanho={notasPg.tamanho} total={notasPg.total} onPagina={notasPg.setPagina} rotulo="notas" />
       </Card>
     </div>
   )
@@ -143,8 +148,8 @@ function Indicador({ rotulo, valor, detalhe }: { rotulo: string; valor: string; 
   return (
     <Card>
       <CardContent className="p-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{rotulo}</p>
-        <p className="mt-1 text-xl font-bold tabular-nums">{valor}</p>
+        <p className="text-xs font-semibold text-muted-foreground">{rotulo}</p>
+        <p className="mt-1 text-xl font-semibold tabular-nums">{valor}</p>
         {detalhe && <p className="text-xs text-muted-foreground">{detalhe}</p>}
       </CardContent>
     </Card>
@@ -167,6 +172,7 @@ const VAZIO: ContatoInput = { nome: '', cargo: '', email: '', telefone: '', prin
 function ContatosCard({ clienteId, contatos }: { clienteId: number; contatos: Contato[] }) {
   const salvar = useSalvarContato(clienteId)
   const remover = useRemoverContato(clienteId)
+  const pgContatos = usePaginacao(contatos, 5)
   // null = formulário fechado; { contatoId: undefined } = novo contato
   const [edicao, setEdicao] = useState<{ contatoId?: number; dados: ContatoInput } | null>(null)
 
@@ -185,7 +191,7 @@ function ContatosCard({ clienteId, contatos }: { clienteId: number; contatos: Co
     setEdicao((atual) => (atual ? { ...atual, dados: { ...atual.dados, [campo]: valor } } : atual))
 
   return (
-    <Card className="lg:col-span-2">
+    <Card className="flex flex-col lg:col-span-2">
       <CardHeader className="flex-row items-start justify-between space-y-0">
         <div>
           <CardTitle>Contatos</CardTitle>
@@ -208,37 +214,41 @@ function ContatosCard({ clienteId, contatos }: { clienteId: number; contatos: Co
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <Rotulado id="c-nome" rotulo="Nome *">
-                <Input
+                <InputMascarado
                   id="c-nome"
+                  mascara="texto"
+                  tamanho={120}
                   required
-                  maxLength={120}
                   value={edicao.dados.nome}
-                  onChange={(e) => atualizar('nome', e.target.value)}
+                  onValueChange={(v) => atualizar('nome', v)}
                 />
               </Rotulado>
               <Rotulado id="c-cargo" rotulo="Cargo">
-                <Input
+                <InputMascarado
                   id="c-cargo"
-                  maxLength={80}
+                  mascara="texto"
+                  tamanho={80}
                   value={edicao.dados.cargo ?? ''}
-                  onChange={(e) => atualizar('cargo', e.target.value)}
+                  onValueChange={(v) => atualizar('cargo', v)}
                 />
               </Rotulado>
               <Rotulado id="c-email" rotulo="E-mail">
-                <Input
+                <InputMascarado
                   id="c-email"
-                  type="email"
-                  maxLength={160}
+                  mascara="email"
+                  tamanho={160}
+                  placeholder="nome@empresa.com.br"
                   value={edicao.dados.email ?? ''}
-                  onChange={(e) => atualizar('email', e.target.value)}
+                  onValueChange={(v) => atualizar('email', v)}
                 />
               </Rotulado>
               <Rotulado id="c-tel" rotulo="Telefone">
-                <Input
+                <InputMascarado
                   id="c-tel"
-                  maxLength={20}
+                  mascara="telefone"
+                  placeholder="(00) 00000-0000"
                   value={edicao.dados.telefone ?? ''}
-                  onChange={(e) => atualizar('telefone', e.target.value)}
+                  onValueChange={(v) => atualizar('telefone', v)}
                 />
               </Rotulado>
             </div>
@@ -277,7 +287,7 @@ function ContatosCard({ clienteId, contatos }: { clienteId: number; contatos: Co
         )}
 
         <ul className="divide-y">
-          {contatos.map((ct) => (
+          {pgContatos.visiveis.map((ct) => (
             <li key={ct.id} className="flex items-start justify-between gap-3 py-3">
               <div className="min-w-0 space-y-0.5">
                 <p className="flex items-center gap-2 font-semibold">
@@ -297,7 +307,7 @@ function ContatosCard({ clienteId, contatos }: { clienteId: number; contatos: Co
                   )}
                   {ct.telefone && (
                     <a href={`tel:${ct.telefone}`} className="inline-flex items-center gap-1.5 hover:underline">
-                      <Phone className="size-3.5" aria-hidden /> {ct.telefone}
+                      <Phone className="size-3.5" aria-hidden /> {formatarTelefone(ct.telefone)}
                     </a>
                   )}
                 </div>
@@ -338,6 +348,7 @@ function ContatosCard({ clienteId, contatos }: { clienteId: number; contatos: Co
           ))}
         </ul>
       </CardContent>
+      <Paginacao pagina={pgContatos.pagina} tamanho={pgContatos.tamanho} total={pgContatos.total} onPagina={pgContatos.setPagina} rotulo="contatos" />
     </Card>
   )
 }
