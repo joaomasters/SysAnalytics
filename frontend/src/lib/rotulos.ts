@@ -1,4 +1,14 @@
-import type { EtapaOportunidade, MotivoPerda, ResultadoTarefa, TipoInteracao } from '@/api/types'
+import type {
+  EtapaOportunidade,
+  FormaPagamento,
+  MotivoPerda,
+  ResultadoCobranca,
+  ResultadoTarefa,
+  SituacaoTitulo,
+  StatusProposta,
+  TipoCobranca,
+  TipoInteracao,
+} from '@/api/types'
 
 export const TIPOS_INTERACAO: { valor: TipoInteracao; rotulo: string }[] = [
   { valor: 'LIGACAO', rotulo: 'Ligação' },
@@ -24,6 +34,16 @@ export const ETAPAS_ABERTAS: { valor: EtapaOportunidade; rotulo: string; descric
   { valor: 'NEGOCIACAO', rotulo: 'Negociação', descricao: 'Ajustando condições' },
 ]
 
+export const rotuloEtapa = (e: EtapaOportunidade): string =>
+  e === 'GANHA' ? 'Ganha' : e === 'PERDIDA' ? 'Perdida' : (ETAPAS_ABERTAS.find((x) => x.valor === e)?.rotulo ?? e)
+
+export const STATUS_PROPOSTA: Record<StatusProposta, { rotulo: string; variant: 'neutro' | 'alerta' | 'ok' | 'critico' }> = {
+  RASCUNHO: { rotulo: 'Rascunho', variant: 'neutro' },
+  ENVIADA: { rotulo: 'Enviada', variant: 'alerta' },
+  ACEITA: { rotulo: 'Aceita', variant: 'ok' },
+  RECUSADA: { rotulo: 'Recusada', variant: 'critico' },
+}
+
 export const MOTIVOS_PERDA: { valor: MotivoPerda; rotulo: string }[] = [
   { valor: 'PRECO', rotulo: 'Preço' },
   { valor: 'CONCORRENTE', rotulo: 'Escolheu concorrente' },
@@ -48,4 +68,41 @@ export function dataISO(diasAFrente = 0): string {
 
 /** Classes do <select>/<textarea> nativos, alinhadas ao componente Input. */
 export const CLASSE_CAMPO =
-  'flex w-full rounded-md border border-input bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+  'flex w-full rounded-sm border border-input bg-card px-2.5 py-1.5 text-sm hover:border-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+
+export const SITUACAO_TITULO: Record<SituacaoTitulo, { rotulo: string; variant: 'neutro' | 'alerta' | 'ok' | 'critico' }> = {
+  A_VENCER: { rotulo: 'A vencer', variant: 'neutro' },
+  VENCIDO: { rotulo: 'Vencido', variant: 'critico' },
+  PAGO: { rotulo: 'Pago', variant: 'ok' },
+  CANCELADO: { rotulo: 'Cancelado', variant: 'neutro' },
+}
+
+export const FORMAS_PAGAMENTO: { valor: FormaPagamento; rotulo: string }[] = [
+  { valor: 'PIX', rotulo: 'Pix' },
+  { valor: 'BOLETO', rotulo: 'Boleto' },
+  { valor: 'TRANSFERENCIA', rotulo: 'Transferência' },
+  { valor: 'CARTAO', rotulo: 'Cartão' },
+  { valor: 'DINHEIRO', rotulo: 'Dinheiro' },
+  { valor: 'CHEQUE', rotulo: 'Cheque' },
+  { valor: 'OUTRO', rotulo: 'Outro' },
+]
+
+export const TIPOS_COBRANCA: { valor: TipoCobranca; rotulo: string }[] = [
+  { valor: 'LIGACAO', rotulo: 'Ligação' },
+  { valor: 'WHATSAPP', rotulo: 'WhatsApp' },
+  { valor: 'EMAIL', rotulo: 'E-mail' },
+  { valor: 'VISITA', rotulo: 'Visita' },
+  { valor: 'OUTRO', rotulo: 'Outro' },
+]
+
+export const RESULTADOS_COBRANCA: { valor: ResultadoCobranca; rotulo: string }[] = [
+  { valor: 'SEM_RETORNO', rotulo: 'Sem retorno' },
+  { valor: 'PROMESSA', rotulo: 'Promessa de pagamento' },
+  { valor: 'CONTESTACAO', rotulo: 'Contestação' },
+  { valor: 'PAGAMENTO_INFORMADO', rotulo: 'Pagamento informado' },
+  { valor: 'OUTRO', rotulo: 'Outro' },
+]
+
+export const rotuloForma = (v: FormaPagamento) => FORMAS_PAGAMENTO.find((f) => f.valor === v)?.rotulo ?? v
+export const rotuloTipoCobranca = (v: TipoCobranca) => TIPOS_COBRANCA.find((f) => f.valor === v)?.rotulo ?? v
+export const rotuloResultadoCobranca = (v: ResultadoCobranca) => RESULTADOS_COBRANCA.find((f) => f.valor === v)?.rotulo ?? v

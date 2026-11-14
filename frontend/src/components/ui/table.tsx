@@ -1,6 +1,7 @@
 import type { HTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from 'react'
 import { cn } from '@/lib/utils'
 
+/** Grade densa: cabeçalho fixo cinza-claro, linhas de 40px e realce azul no hover (estilo "grid" do Dynamics). */
 export function Table({ className, ...props }: HTMLAttributes<HTMLTableElement>) {
   return (
     <div className="relative w-full overflow-x-auto">
@@ -10,7 +11,7 @@ export function Table({ className, ...props }: HTMLAttributes<HTMLTableElement>)
 }
 
 export function TableHeader({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn('[&_tr]:border-b bg-muted/50', className)} {...props} />
+  return <thead className={cn('border-b bg-muted [&_tr]:border-b-0', className)} {...props} />
 }
 
 export function TableBody({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
@@ -18,18 +19,18 @@ export function TableBody({ className, ...props }: HTMLAttributes<HTMLTableSecti
 }
 
 export function TableRow({ className, ...props }: HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn('border-b transition-colors hover:bg-muted/40', className)} {...props} />
+  return <tr className={cn('border-b transition-colors hover:bg-accent/60', className)} {...props} />
 }
 
 export function TableHead({ className, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
-      className={cn('h-10 px-3 text-left align-middle text-xs font-semibold uppercase tracking-wide text-muted-foreground', className)}
+      className={cn('h-9 whitespace-nowrap px-3 text-left align-middle text-xs font-semibold text-muted-foreground', className)}
       {...props}
     />
   )
 }
 
 export function TableCell({ className, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn('px-3 py-3 align-middle', className)} {...props} />
+  return <td className={cn('px-3 py-2 align-middle', className)} {...props} />
 }

@@ -226,12 +226,29 @@ export interface Oportunidade {
   criadaEm: string
 }
 
+export interface ItemOportunidadeInput {
+  produtoId: number
+  quantidade: number
+}
+
+export interface ItemOportunidade {
+  id: number
+  produtoId: number
+  descricao: string
+  unidade: string
+  quantidade: number
+  precoUnitario: number
+  total: number
+}
+
 export interface OportunidadeInput {
   clienteId: number
   titulo: string
   descricao?: string
-  valorEstimado: number
+  /** Opcional quando há itens do catálogo (o valor passa a ser a soma deles). */
+  valorEstimado?: number
   dataPrevistaFechamento?: string
+  itens?: ItemOportunidadeInput[]
 }
 
 export interface OportunidadeEdicaoInput {
@@ -262,4 +279,235 @@ export interface FunilResumo {
   ganhasNoMes: number
   valorGanhoNoMes: number
   taxaConversao90d: number | null
+}
+
+export interface Produto {
+  id: number
+  codigo: string
+  nome: string
+  descricao: string | null
+  unidade: string
+  precoUnitario: number
+  ativo: boolean
+}
+
+export interface ProdutoInput {
+  codigo: string
+  nome: string
+  descricao?: string
+  unidade: string
+  precoUnitario: number
+  ativo?: boolean
+}
+
+export type StatusProposta = 'RASCUNHO' | 'ENVIADA' | 'ACEITA' | 'RECUSADA'
+
+export interface ItemProposta {
+  id: number
+  produtoId: number | null
+  descricao: string
+  unidade: string
+  quantidade: number
+  precoUnitario: number
+  descontoPercentual: number
+  total: number
+}
+
+export interface ItemPropostaInput {
+  produtoId?: number | null
+  descricao: string
+  unidade: string
+  quantidade: number
+  precoUnitario: number
+  descontoPercentual: number
+}
+
+export interface PropostaResumo {
+  id: number
+  numero: string
+  status: StatusProposta
+  validadeAte: string | null
+  total: number
+  criadaPor: string
+  criadaEm: string
+}
+
+export interface PropostaDetalhe {
+  id: number
+  numero: string
+  status: StatusProposta
+  oportunidadeId: number
+  oportunidadeTitulo: string
+  clienteId: number
+  clienteNome: string
+  clienteRazaoSocial: string
+  clienteCnpj: string
+  contatoNome: string | null
+  contatoEmail: string | null
+  empresaNome: string
+  elaboradaPor: string
+  validadeAte: string | null
+  condicoesPagamento: string | null
+  observacoes: string | null
+  itens: ItemProposta[]
+  subtotal: number
+  descontoTotal: number
+  total: number
+  criadaEm: string
+  atualizadaEm: string
+}
+
+export interface PropostaInput {
+  validadeAte?: string
+  condicoesPagamento?: string
+  observacoes?: string
+  itens: ItemPropostaInput[]
+}
+
+export type SituacaoMeta = 'SEM_META' | 'ATINGIDA' | 'NO_RITMO' | 'ABAIXO_DO_RITMO' | 'NAO_ATINGIDA' | 'PENDENTE'
+
+export interface MetaVendedor {
+  vendedorId: number | null
+  vendedorNome: string
+  carteira: string | null
+  meta: number | null
+  realizado: number
+  atingimento: number | null
+  ritmoEsperado: number | null
+  faltaParaMeta: number | null
+  previsaoFunil: number
+  atingimentoProjetado: number | null
+  situacao: SituacaoMeta
+}
+
+export interface MetaMes {
+  mes: string
+  diasNoMes: number
+  diasDecorridos: number
+  total: MetaVendedor
+  vendedores: MetaVendedor[]
+}
+
+export interface MetaItem {
+  vendedorId: number
+  valor: number | null
+}
+
+export type FiltroTitulo = 'TODOS' | 'EM_ABERTO' | 'A_VENCER' | 'VENCIDO' | 'PAGO' | 'CANCELADO'
+export type SituacaoTitulo = 'A_VENCER' | 'VENCIDO' | 'PAGO' | 'CANCELADO'
+export type FormaPagamento = 'PIX' | 'BOLETO' | 'TRANSFERENCIA' | 'CARTAO' | 'DINHEIRO' | 'CHEQUE' | 'OUTRO'
+export type TipoCobranca = 'LIGACAO' | 'WHATSAPP' | 'EMAIL' | 'VISITA' | 'OUTRO'
+export type ResultadoCobranca = 'SEM_RETORNO' | 'PROMESSA' | 'CONTESTACAO' | 'PAGAMENTO_INFORMADO' | 'OUTRO'
+
+export interface TituloResumo {
+  id: number
+  clienteId: number
+  clienteNome: string
+  vendedorNome: string
+  numeroDocumento: string
+  parcela: number
+  totalParcelas: number
+  descricao: string | null
+  dataEmissao: string
+  dataVencimento: string
+  valor: number
+  valorPago: number
+  saldo: number
+  status: 'ABERTO' | 'PARCIAL' | 'PAGO' | 'CANCELADO'
+  situacao: SituacaoTitulo
+  diasAtraso: number
+  ultimaCobrancaEm: string | null
+  promessaData: string | null
+}
+
+export interface BaixaItem {
+  id: number
+  dataBaixa: string
+  valor: number
+  formaPagamento: FormaPagamento
+  observacao: string | null
+  usuarioNome: string
+  criadaEm: string
+}
+
+export interface CobrancaItem {
+  id: number
+  tipo: TipoCobranca
+  resultado: ResultadoCobranca
+  resumo: string
+  promessaData: string | null
+  promessaValor: number | null
+  promessaStatus: 'PENDENTE' | 'CUMPRIDA' | 'QUEBRADA' | null
+  usuarioNome: string
+  criadaEm: string
+}
+
+export interface TituloDetalhe {
+  titulo: TituloResumo
+  baixas: BaixaItem[]
+  cobrancas: CobrancaItem[]
+}
+
+export interface FaixaAging {
+  faixa: string
+  valor: number
+  quantidade: number
+}
+
+export interface Devedor {
+  clienteId: number
+  clienteNome: string
+  vencido: number
+  titulos: number
+  maiorAtraso: number
+}
+
+export interface ResumoReceber {
+  totalAberto: number
+  aVencer: number
+  vence7Dias: number
+  vencido: number
+  titulosAbertos: number
+  titulosVencidos: number
+  recebidoNoMes: number
+  inadimplenciaPercentual: number | null
+  prazoMedioRecebimentoDias: number | null
+  aging: FaixaAging[]
+  maioresDevedores: Devedor[]
+  promessasPendentes: number
+  promessasQuebradas: number
+}
+
+export interface TituloInput {
+  clienteId: number
+  numeroDocumento: string
+  descricao?: string
+  dataEmissao: string
+  primeiroVencimento: string
+  valorTotal: number
+  parcelas: number
+  intervaloDias: number
+}
+
+export interface BaixaInput {
+  dataBaixa: string
+  valor: number
+  formaPagamento: FormaPagamento
+  observacao?: string
+}
+
+export interface CobrancaInput {
+  tipo: TipoCobranca
+  resultado: ResultadoCobranca
+  resumo: string
+  promessaData?: string
+  promessaValor?: number
+}
+
+export interface FiltrosReceber {
+  situacao: FiltroTitulo
+  busca: string
+  clienteId?: number
+  pagina: number
+  tamanho: number
 }

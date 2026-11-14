@@ -6,15 +6,19 @@ import { TarefaItem } from '@/components/tarefas/TarefaItem'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { InputMascarado } from '@/components/ui/input-mascarado'
 import { Input } from '@/components/ui/input'
+import { Paginacao } from '@/components/ui/paginacao'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCriarTarefa, useInteracoes, useRegistrarInteracao, useTarefas } from '@/hooks/queries'
+import { usePaginacao } from '@/lib/usePaginacao'
 import { CLASSE_CAMPO, dataISO, rotuloTipo, TIPOS_INTERACAO } from '@/lib/rotulos'
 
 /** Histórico de interações do cliente + formulário para registrar uma nova. */
 export function InteracoesCard({ clienteId, contatos }: { clienteId: number; contatos: Contato[] }) {
   const { data, isLoading, isError, error } = useInteracoes(clienteId)
   const registrar = useRegistrarInteracao(clienteId)
+  const pg = usePaginacao(data, 5)
   const [aberto, setAberto] = useState(false)
   const [tipo, setTipo] = useState<TipoInteracao>('LIGACAO')
   const [resumo, setResumo] = useState('')
@@ -36,7 +40,7 @@ export function InteracoesCard({ clienteId, contatos }: { clienteId: number; con
   }
 
   return (
-    <Card>
+    <Card className="flex flex-col">
       <CardHeader className="flex-row items-start justify-between space-y-0">
         <div>
           <CardTitle>Histórico de interações</CardTitle>
@@ -124,7 +128,7 @@ export function InteracoesCard({ clienteId, contatos }: { clienteId: number; con
           <p className="py-6 text-center text-sm text-muted-foreground">Nenhuma interação registrada ainda.</p>
         )}
         <ol className="divide-y">
-          {data?.map((i) => (
+          {pg.visiveis.map((i) => (
             <li key={i.id} className="space-y-1 py-3">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="neutro">{rotuloTipo(i.tipo)}</Badge>
@@ -139,6 +143,7 @@ export function InteracoesCard({ clienteId, contatos }: { clienteId: number; con
           ))}
         </ol>
       </CardContent>
+      <Paginacao pagina={pg.pagina} tamanho={pg.tamanho} total={pg.total} onPagina={pg.setPagina} rotulo="interações" />
     </Card>
   )
 }
@@ -147,6 +152,7 @@ export function InteracoesCard({ clienteId, contatos }: { clienteId: number; con
 export function TarefasDoCliente({ clienteId }: { clienteId: number }) {
   const { data, isLoading } = useTarefas('ABERTA', false, clienteId)
   const criar = useCriarTarefa()
+  const pg = usePaginacao(data, 5)
   const [aberto, setAberto] = useState(false)
   const [titulo, setTitulo] = useState('')
   const [descricao, setDescricao] = useState('')
@@ -169,7 +175,7 @@ export function TarefasDoCliente({ clienteId }: { clienteId: number }) {
   }
 
   return (
-    <Card>
+    <Card className="flex flex-col">
       <CardHeader className="flex-row items-start justify-between space-y-0">
         <div>
           <CardTitle>Tarefas em aberto</CardTitle>
@@ -195,12 +201,13 @@ export function TarefasDoCliente({ clienteId }: { clienteId: number }) {
                 <label htmlFor="t-titulo" className="text-sm font-medium">
                   Título *
                 </label>
-                <Input
+                <InputMascarado
                   id="t-titulo"
+                  mascara="texto"
+                  tamanho={160}
                   required
-                  maxLength={160}
                   value={titulo}
-                  onChange={(e) => setTitulo(e.target.value)}
+                  onValueChange={setTitulo}
                 />
               </div>
               <div className="space-y-1.5">
@@ -253,9 +260,10 @@ export function TarefasDoCliente({ clienteId }: { clienteId: number }) {
           </div>
         )}
         <ol className="divide-y">
-          {data?.map((t) => <TarefaItem key={t.id} tarefa={t} mostrarCliente={false} />)}
+          {pg.visiveis.map((t) => <TarefaItem key={t.id} tarefa={t} mostrarCliente={false} />)}
         </ol>
       </CardContent>
+      <Paginacao pagina={pg.pagina} tamanho={pg.tamanho} total={pg.total} onPagina={pg.setPagina} rotulo="tarefas" />
     </Card>
   )
 }

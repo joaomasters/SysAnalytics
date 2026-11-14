@@ -44,18 +44,18 @@ export function NotificationBell() {
         aria-label={`Notificações: ${naoLidas} não lidas`}
         aria-expanded={aberto}
         onClick={() => setAberto((v) => !v)}
-        className="relative"
+        className="relative h-9 w-9 text-topbar-foreground hover:bg-white/10 hover:text-topbar-foreground"
       >
         <Bell className="!size-5" />
         {naoLidas > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[11px] font-bold text-white ring-2 ring-card">
+          <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[11px] font-bold text-white ring-2 ring-topbar">
             {naoLidas > 99 ? '99+' : naoLidas}
           </span>
         )}
       </Button>
 
       {aberto && (
-        <div className="absolute right-0 z-50 mt-2 w-[min(24rem,calc(100vw-2rem))] rounded-lg border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95">
+        <div className="absolute right-0 z-50 mt-2 w-[min(24rem,calc(100vw-2rem))] rounded border bg-popover text-popover-foreground shadow-flutuante animate-in fade-in-0 zoom-in-95">
           <div className="flex items-center justify-between border-b px-4 py-3">
             <p className="text-sm font-semibold">Alertas não lidos</p>
             <Button

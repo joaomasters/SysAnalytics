@@ -31,10 +31,10 @@ export function DashboardPage() {
   const r = data?.resumo
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="mx-auto max-w-[1440px] space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Visão executiva</h2>
+          <h2 className="text-xl font-semibold">Visão executiva</h2>
           <p className="text-sm text-muted-foreground">
             {data ? `Período de ${formatData(data.inicio)} a ${formatData(data.fim)}` : 'Carregando período...'}
             {isFetching && !isLoading && ' · atualizando...'}

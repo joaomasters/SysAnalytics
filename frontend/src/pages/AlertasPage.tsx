@@ -6,6 +6,7 @@ import type { NivelRisco, Notificacao } from '@/api/types'
 import { RiscoBadge } from '@/components/RiscoBadge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Paginacao } from '@/components/ui/paginacao'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -27,15 +28,17 @@ const ICONE: Record<NivelRisco, { Icone: typeof Clock; cor: string }> = {
 
 export function AlertasPage() {
   const [filtro, setFiltro] = useState<'todos' | 'naoLidos'>('todos')
-  const { data, isLoading, isError, error } = useNotificacoes(filtro === 'naoLidos')
+  const [pagina, setPagina] = useState(0)
+  const [tamanho, setTamanho] = useState(10)
+  const { data, isLoading, isError, error } = useNotificacoes(filtro === 'naoLidos', pagina, tamanho)
   const { data: naoLidas = 0 } = useContagemNaoLidas()
   const marcarTodas = useMarcarTodasComoLidas()
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-[1440px] space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Central de alertas do vendedor</h2>
+          <h2 className="text-xl font-semibold">Central de alertas do vendedor</h2>
           <p className="text-sm text-muted-foreground">
             Eventos recebidos da fila <code className="rounded bg-muted px-1">q.notificacao.dashboard</code> ·{' '}
             {naoLidas} não lido(s)
@@ -49,7 +52,10 @@ export function AlertasPage() {
               { valor: 'naoLidos', rotulo: 'Não lidos' },
             ]}
             valor={filtro}
-            onChange={setFiltro}
+            onChange={(f) => {
+              setFiltro(f)
+              setPagina(0)
+            }}
           />
           <Button
             variant="outline"
@@ -90,6 +96,17 @@ export function AlertasPage() {
           <ol className="divide-y">
             {data?.conteudo.map((n) => <ItemFeed key={n.id} notificacao={n} />)}
           </ol>
+          <Paginacao
+            pagina={pagina}
+            tamanho={tamanho}
+            total={data?.totalElementos ?? 0}
+            onPagina={setPagina}
+            onTamanho={(t) => {
+              setTamanho(t)
+              setPagina(0)
+            }}
+            rotulo="alertas"
+          />
         </CardContent>
       </Card>
     </div>

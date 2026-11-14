@@ -35,6 +35,12 @@ public class OportunidadeController {
         return service.resumo(somenteMinhas);
     }
 
+    @Operation(summary = "Detalhe de uma oportunidade")
+    @GetMapping("/{id}")
+    public OportunidadeResponse obter(@PathVariable Long id) {
+        return service.obter(id);
+    }
+
     @Operation(summary = "Cria uma oportunidade na etapa Prospecção")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -52,5 +58,17 @@ public class OportunidadeController {
     @PatchMapping("/{id}/etapa")
     public OportunidadeResponse mover(@PathVariable Long id, @Valid @RequestBody MoverRequest request) {
         return service.mover(id, request);
+    }
+
+    @Operation(summary = "Produtos de interesse (do catálogo) da oportunidade")
+    @GetMapping("/{id}/itens")
+    public List<ItemResponse> itens(@PathVariable Long id) {
+        return service.itens(id);
+    }
+
+    @Operation(summary = "Substitui os produtos de interesse; o valor estimado passa a ser a soma dos itens")
+    @PutMapping("/{id}/itens")
+    public OportunidadeResponse definirItens(@PathVariable Long id, @Valid @RequestBody ItensRequest request) {
+        return service.definirItens(id, request.itens());
     }
 }

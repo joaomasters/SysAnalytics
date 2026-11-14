@@ -8,11 +8,14 @@ import { NIVEIS_RISCO, RiscoBadge } from '@/components/RiscoBadge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Paginacao } from '@/components/ui/paginacao'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useClientes, useExecutarAnaliseInatividade } from '@/hooks/queries'
 import { formatBRL, formatData } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { mascaraCpfCnpj } from '@/lib/mascaras'
+import { usePaginacao } from '@/lib/usePaginacao'
 
 const NIVEIS_VALIDOS = new Set<string>(NIVEIS_RISCO.map((n) => n.valor))
 
@@ -31,10 +34,15 @@ export function ClientesPage() {
     () => params.getAll('nivel').filter((n): n is NivelRisco => NIVEIS_VALIDOS.has(n)),
     [params],
   )
-  const [busca, setBusca] = useState('')
+  const [busca, setBusca] = useState(() => params.get('busca') ?? '')
+  const buscaUrl = params.get('busca')
+  useEffect(() => {
+    if (buscaUrl !== null) setBusca(buscaUrl)
+  }, [buscaUrl])
   const buscaDebounced = useDebounce(busca)
 
   const { data: clientes, isLoading, isError, error, isFetching } = useClientes(niveis, buscaDebounced)
+  const pg = usePaginacao(clientes, 10, `${niveis.join(',')}|${buscaDebounced}`)
   const analise = useExecutarAnaliseInatividade()
   const { temPerfil } = useAuth()
   const podeAnalisar = temPerfil('GESTOR', 'ADMIN') // a API de jobs é restrita à gestão
@@ -47,10 +55,10 @@ export function ClientesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="mx-auto max-w-[1440px] space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Clientes & régua de churn</h2>
+          <h2 className="text-xl font-semibold">Clientes & régua de churn</h2>
           <p className="text-sm text-muted-foreground">
             Dias corridos desde a última compra: <strong>Alerta</strong> 30–59 · <strong>Atenção</strong> 60–89 ·{' '}
             <strong>Crítico</strong> 90+
@@ -94,8 +102,8 @@ export function ClientesPage() {
                     onClick={() => alternarNivel(n.valor)}
                     title={n.faixa}
                     className={cn(
-                      'rounded-full border-2 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                      ativo ? 'border-foreground/60' : 'border-transparent opacity-60 hover:opacity-100',
+                      'rounded-sm transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                      ativo ? 'ring-2 ring-primary' : 'opacity-60 hover:opacity-100',
                     )}
                   >
                     <RiscoBadge nivel={n.valor} />
@@ -151,7 +159,7 @@ export function ClientesPage() {
                     </TableCell>
                   </TableRow>
                 )}
-                {clientes?.map((c) => (
+                {pg.visiveis.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell>
                       <Link
@@ -161,7 +169,7 @@ export function ClientesPage() {
                         {c.nomeFantasia}
                       </Link>
                       <p className="text-xs text-muted-foreground">
-                        {c.cnpj} · {c.cidade}/{c.uf} · {c.segmento}
+                        {mascaraCpfCnpj(c.cnpj)} · {c.cidade}/{c.uf} · {c.segmento}
                       </p>
                     </TableCell>
                     <TableCell className="whitespace-nowrap">{formatData(c.ultimaCompra)}</TableCell>
@@ -184,6 +192,7 @@ export function ClientesPage() {
               </TableBody>
             </Table>
           )}
+          <Paginacao pagina={pg.pagina} tamanho={pg.tamanho} total={pg.total} onPagina={pg.setPagina} onTamanho={pg.setTamanho} rotulo="clientes" />
         </CardContent>
       </Card>
     </div>
