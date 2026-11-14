@@ -10,6 +10,8 @@ import type {
   Interacao,
   InteracaoInput,
   MoverOportunidadeInput,
+  ItemOportunidade,
+  ItemOportunidadeInput,
   Oportunidade,
   OportunidadeEdicaoInput,
   OportunidadeInput,
@@ -32,6 +34,13 @@ import type {
   Tarefa,
   TarefaInput,
   Usuario,
+  BaixaInput,
+  CobrancaInput,
+  FiltrosReceber,
+  ResumoReceber,
+  TituloDetalhe,
+  TituloInput,
+  TituloResumo,
 } from './types'
 
 export const http = axios.create({
@@ -159,6 +168,12 @@ export const api = {
   atualizarOportunidade: async (id: number, dados: OportunidadeEdicaoInput) =>
     (await http.put<Oportunidade>(`/oportunidades/${id}`, dados)).data,
 
+  itensOportunidade: async (id: number) =>
+    (await http.get<ItemOportunidade[]>(`/oportunidades/${id}/itens`)).data,
+
+  definirItensOportunidade: async (id: number, itens: ItemOportunidadeInput[]) =>
+    (await http.put<Oportunidade>(`/oportunidades/${id}/itens`, { itens })).data,
+
   moverOportunidade: async (id: number, dados: MoverOportunidadeInput) =>
     (await http.patch<Oportunidade>(`/oportunidades/${id}/etapa`, dados)).data,
 
@@ -167,6 +182,36 @@ export const api = {
   metas: async (mes: string) => (await http.get<MetaMes>('/metas', { params: { mes } })).data,
 
   salvarMetas: async (mes: string, metas: MetaItem[]) => (await http.put<MetaMes>(`/metas/${mes}`, { metas })).data,
+
+  receber: async (f: FiltrosReceber) =>
+    (
+      await http.get<Pagina<TituloResumo>>('/financeiro/receber', {
+        params: {
+          situacao: f.situacao,
+          busca: f.busca || undefined,
+          clienteId: f.clienteId,
+          pagina: f.pagina,
+          tamanho: f.tamanho,
+        },
+      })
+    ).data,
+
+  receberResumo: async () => (await http.get<ResumoReceber>('/financeiro/receber/resumo')).data,
+
+  titulo: async (id: number) => (await http.get<TituloDetalhe>(`/financeiro/receber/${id}`)).data,
+
+  criarTitulo: async (dados: TituloInput) => (await http.post<TituloResumo[]>('/financeiro/receber', dados)).data,
+
+  baixarTitulo: async (id: number, dados: BaixaInput) =>
+    (await http.post<TituloDetalhe>(`/financeiro/receber/${id}/baixas`, dados)).data,
+
+  estornarBaixa: async (id: number, baixaId: number) =>
+    (await http.delete<TituloDetalhe>(`/financeiro/receber/${id}/baixas/${baixaId}`)).data,
+
+  cancelarTitulo: async (id: number) => (await http.post<TituloDetalhe>(`/financeiro/receber/${id}/cancelar`)).data,
+
+  registrarCobranca: async (id: number, dados: CobrancaInput) =>
+    (await http.post<TituloDetalhe>(`/financeiro/receber/${id}/cobrancas`, dados)).data,
 
   produtos: async (busca: string, incluirInativos: boolean) =>
     (await http.get<Produto[]>('/produtos', { params: { busca: busca || undefined, incluirInativos } })).data,

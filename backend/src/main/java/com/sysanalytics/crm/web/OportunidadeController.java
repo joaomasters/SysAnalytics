@@ -59,4 +59,16 @@ public class OportunidadeController {
     public OportunidadeResponse mover(@PathVariable Long id, @Valid @RequestBody MoverRequest request) {
         return service.mover(id, request);
     }
+
+    @Operation(summary = "Produtos de interesse (do catálogo) da oportunidade")
+    @GetMapping("/{id}/itens")
+    public List<ItemResponse> itens(@PathVariable Long id) {
+        return service.itens(id);
+    }
+
+    @Operation(summary = "Substitui os produtos de interesse; o valor estimado passa a ser a soma dos itens")
+    @PutMapping("/{id}/itens")
+    public OportunidadeResponse definirItens(@PathVariable Long id, @Valid @RequestBody ItensRequest request) {
+        return service.definirItens(id, request.itens());
+    }
 }

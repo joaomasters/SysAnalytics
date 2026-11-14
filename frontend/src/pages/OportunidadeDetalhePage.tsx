@@ -1,13 +1,21 @@
 import { ArrowLeft, FilePlus2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { mensagemDeErro } from '@/api/client'
+import { SeletorProdutos, novaLinha, type LinhaProduto } from '@/components/funil/SeletorProdutos'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Paginacao } from '@/components/ui/paginacao'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { useCriarProposta, useOportunidade, usePropostas } from '@/hooks/queries'
+import {
+  useCriarProposta,
+  useDefinirItensOportunidade,
+  useItensOportunidade,
+  useOportunidade,
+  usePropostas,
+} from '@/hooks/queries'
 import { formatBRL, formatData } from '@/lib/format'
 import { usePaginacao } from '@/lib/usePaginacao'
 import { rotuloEtapa, rotuloMotivo, STATUS_PROPOSTA } from '@/lib/rotulos'
@@ -18,6 +26,13 @@ export function OportunidadeDetalhePage() {
   const { data: o, isLoading, isError, error } = useOportunidade(oportunidadeId)
   const { data: propostas } = usePropostas(oportunidadeId)
   const criar = useCriarProposta(oportunidadeId)
+  const { data: itens } = useItensOportunidade(oportunidadeId)
+  const salvarItens = useDefinirItensOportunidade(oportunidadeId)
+  const [linhas, setLinhas] = useState<LinhaProduto[]>([])
+  const [editandoItens, setEditandoItens] = useState(false)
+  useEffect(() => {
+    if (itens) setLinhas(itens.map((i) => novaLinha(i.produtoId, String(i.quantidade))))
+  }, [itens])
   const pg = usePaginacao(propostas, 5)
 
   const voltar = (
@@ -69,6 +84,81 @@ export function OportunidadeDetalhePage() {
       <Card>
         <CardHeader className="flex-row items-start justify-between space-y-0">
           <div>
+            <CardTitle>Produtos de interesse</CardTitle>
+            <CardDescription>
+              Itens do catálogo ligados a esta oportunidade. Eles definem o valor estimado e entram prontos na nova proposta.
+            </CardDescription>
+          </div>
+          {!encerrada && !editandoItens && (
+            <Button size="sm" variant="outline" onClick={() => setEditandoItens(true)}>
+              {itens && itens.length > 0 ? 'Editar produtos' : 'Escolher produtos'}
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {editandoItens ? (
+            <>
+              <SeletorProdutos linhas={linhas} onChange={setLinhas} />
+              {salvarItens.isError && (
+                <p role="alert" className="text-sm text-destructive">
+                  {mensagemDeErro(salvarItens.error)}
+                </p>
+              )}
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setLinhas((itens ?? []).map((i) => novaLinha(i.produtoId, String(i.quantidade))))
+                    setEditandoItens(false)
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  disabled={salvarItens.isPending || linhas.some((l) => !(Number(l.quantidade) > 0))}
+                  onClick={() =>
+                    salvarItens.mutate(
+                      linhas.map((l) => ({ produtoId: l.produtoId, quantidade: Number(l.quantidade) })),
+                      { onSuccess: () => setEditandoItens(false) },
+                    )
+                  }
+                >
+                  {salvarItens.isPending ? 'Salvando…' : 'Salvar produtos'}
+                </Button>
+              </div>
+            </>
+          ) : itens && itens.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Produto</TableHead>
+                  <TableHead className="text-right">Qtd.</TableHead>
+                  <TableHead className="text-right">Preço</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {itens.map((i) => (
+                  <TableRow key={i.id}>
+                    <TableCell>{i.descricao}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {i.quantidade} {i.unidade}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{formatBRL(i.precoUnitario)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatBRL(i.total)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="text-sm text-muted-foreground">Nenhum produto escolhido.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex-row items-start justify-between space-y-0">
+          <div>
             <CardTitle>Propostas</CardTitle>
             <CardDescription>
               Ao enviar uma proposta, o valor da oportunidade passa a ser o total dela.
@@ -79,7 +169,19 @@ export function OportunidadeDetalhePage() {
             disabled={encerrada || criar.isPending}
             title={encerrada ? 'Oportunidade encerrada' : undefined}
             onClick={() =>
-              criar.mutate({ itens: [] }, { onSuccess: (p) => navigate(`/propostas/${p.id}`) })
+              criar.mutate(
+                {
+                  itens: (itens ?? []).map((i) => ({
+                    produtoId: i.produtoId,
+                    descricao: i.descricao,
+                    unidade: i.unidade,
+                    quantidade: i.quantidade,
+                    precoUnitario: i.precoUnitario,
+                    descontoPercentual: 0,
+                  })),
+                },
+                { onSuccess: (p) => navigate(`/propostas/${p.id}`) },
+              )
             }
           >
             <FilePlus2 /> {criar.isPending ? 'Criando…' : 'Nova proposta'}

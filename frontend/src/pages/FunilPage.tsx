@@ -5,6 +5,7 @@ import { mensagemDeErro } from '@/api/client'
 import type { SituacaoOportunidade } from '@/api/types'
 import { useAuth } from '@/auth/AuthContext'
 import { OportunidadeCard } from '@/components/funil/OportunidadeCard'
+import { SeletorProdutos, totalLinhas, type LinhaProduto } from '@/components/funil/SeletorProdutos'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -13,7 +14,7 @@ import { Paginacao } from '@/components/ui/paginacao'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { useClientes, useCriarOportunidade, useFunilResumo, useOportunidades } from '@/hooks/queries'
+import { useClientes, useCriarOportunidade, useFunilResumo, useOportunidades, useProdutos } from '@/hooks/queries'
 import { formatBRL, formatPercentual } from '@/lib/format'
 import { usePaginacao } from '@/lib/usePaginacao'
 import { CLASSE_CAMPO, ETAPAS_ABERTAS, rotuloMotivo } from '@/lib/rotulos'
@@ -216,6 +217,10 @@ function NovaOportunidade({ onFechar }: { onFechar: () => void }) {
   const [valor, setValor] = useState('')
   const [previsao, setPrevisao] = useState('')
   const [descricao, setDescricao] = useState('')
+  const [produtosEscolhidos, setProdutosEscolhidos] = useState<LinhaProduto[]>([])
+  const { data: catalogo } = useProdutos('')
+  const comProdutos = produtosEscolhidos.length > 0
+  const itensValidos = produtosEscolhidos.every((l) => Number(l.quantidade) > 0)
 
   function enviar(e: FormEvent) {
     e.preventDefault()
@@ -224,7 +229,10 @@ function NovaOportunidade({ onFechar }: { onFechar: () => void }) {
         clienteId: Number(clienteId),
         titulo: titulo.trim(),
         descricao: descricao.trim() || undefined,
-        valorEstimado: Number(valor),
+        valorEstimado: comProdutos ? undefined : Number(valor),
+        itens: comProdutos
+          ? produtosEscolhidos.map((l) => ({ produtoId: l.produtoId, quantidade: Number(l.quantidade) }))
+          : undefined,
         dataPrevistaFechamento: previsao || undefined,
       },
       { onSuccess: onFechar },
@@ -275,16 +283,20 @@ function NovaOportunidade({ onFechar }: { onFechar: () => void }) {
             </div>
             <div className="space-y-1.5">
               <label htmlFor="o-valor" className="text-sm font-medium">
-                Valor estimado (R$) *
+                Valor estimado (R$) {comProdutos ? '' : '*'}
               </label>
-              <InputMascarado
-                id="o-valor"
-                mascara="moeda"
-                required
-                placeholder="0,00"
-                value={valor}
-                onValueChange={setValor}
-              />
+              {comProdutos ? (
+                <Input id="o-valor" readOnly value={formatBRL(totalLinhas(produtosEscolhidos, catalogo))} />
+              ) : (
+                <InputMascarado
+                  id="o-valor"
+                  mascara="moeda"
+                  required
+                  placeholder="0,00"
+                  value={valor}
+                  onValueChange={setValor}
+                />
+              )}
             </div>
             <div className="space-y-1.5">
               <label htmlFor="o-prev" className="text-sm font-medium">
@@ -292,6 +304,10 @@ function NovaOportunidade({ onFechar }: { onFechar: () => void }) {
               </label>
               <Input id="o-prev" type="date" value={previsao} onChange={(e) => setPrevisao(e.target.value)} />
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <span className="text-sm font-medium">Produtos de interesse (catálogo)</span>
+            <SeletorProdutos linhas={produtosEscolhidos} onChange={setProdutosEscolhidos} />
           </div>
           <div className="space-y-1.5">
             <label htmlFor="o-desc" className="text-sm font-medium">
@@ -315,7 +331,7 @@ function NovaOportunidade({ onFechar }: { onFechar: () => void }) {
             <Button type="button" variant="outline" onClick={onFechar}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={criar.isPending || !clienteId || !titulo.trim() || valor === ''}>
+            <Button type="submit" disabled={criar.isPending || !clienteId || !titulo.trim() || (comProdutos ? !itensValidos : valor === '')}>
               {criar.isPending ? 'Salvando…' : 'Criar oportunidade'}
             </Button>
           </div>

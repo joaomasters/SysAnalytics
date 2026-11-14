@@ -9,6 +9,8 @@ import { DashboardPage } from '@/pages/DashboardPage'
 import { FunilPage } from '@/pages/FunilPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { OportunidadeDetalhePage } from '@/pages/OportunidadeDetalhePage'
+import { ReceberPage } from '@/pages/ReceberPage'
+import { TituloReceberPage } from '@/pages/TituloReceberPage'
 import { MetasPage } from '@/pages/MetasPage'
 import { ProdutosPage } from '@/pages/ProdutosPage'
 import { PropostaImpressaoPage } from '@/pages/PropostaImpressaoPage'
@@ -36,6 +38,8 @@ export default function App() {
           <Route path="/oportunidades/:id" element={<OportunidadeDetalhePage />} />
           <Route path="/propostas/:id" element={<PropostaPage />} />
           <Route path="/propostas/:id/imprimir" element={<PropostaImpressaoPage />} />
+          <Route path="/financeiro/receber" element={<ReceberPage />} />
+          <Route path="/financeiro/receber/:id" element={<TituloReceberPage />} />
           <Route path="/metas" element={<MetasPage />} />
           <Route path="/produtos" element={<ProdutosPage />} />
           <Route path="/tarefas" element={<TarefasPage />} />

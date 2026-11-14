@@ -4,6 +4,7 @@ import {
   ChevronRight,
   ClipboardCheck,
   Flag,
+  HandCoins,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -46,6 +47,10 @@ const GRUPOS: GrupoNav[] = [
       { to: '/tarefas', rotulo: 'Tarefas', Icone: ClipboardCheck },
       { to: '/alertas', rotulo: 'Central de alertas', Icone: BellRing },
     ],
+  },
+  {
+    titulo: 'Financeiro',
+    itens: [{ to: '/financeiro/receber', rotulo: 'Contas a receber', Icone: HandCoins }],
   },
   {
     titulo: 'Vendas',

@@ -1,12 +1,16 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import type {
+  BaixaInput,
+  CobrancaInput,
   ConcluirTarefaInput,
+  FiltrosReceber,
   ContatoInput,
   Granularidade,
   InteracaoInput,
   MetaItem,
   MoverOportunidadeInput,
+  ItemOportunidadeInput,
   NivelRisco,
   OportunidadeEdicaoInput,
   OportunidadeInput,
@@ -16,6 +20,7 @@ import type {
   StatusProposta,
   StatusTarefa,
   TarefaInput,
+  TituloInput,
 } from '@/api/types'
 
 export const queryKeys = {
@@ -175,6 +180,22 @@ export function useMoverOportunidade() {
   })
 }
 
+export function useItensOportunidade(id: number) {
+  return useQuery({
+    queryKey: ['oportunidades', 'itens', id] as const,
+    queryFn: () => api.itensOportunidade(id),
+    enabled: Number.isFinite(id),
+  })
+}
+
+export function useDefinirItensOportunidade(id: number) {
+  const invalidar = useInvalidarOportunidades()
+  return useMutation({
+    mutationFn: (itens: ItemOportunidadeInput[]) => api.definirItensOportunidade(id, itens),
+    onSuccess: invalidar,
+  })
+}
+
 export function useOportunidade(id: number) {
   return useQuery({
     queryKey: ['oportunidades', 'detalhe', id] as const,
@@ -313,5 +334,66 @@ export function useSalvarMetas(mes: string) {
   return useMutation({
     mutationFn: (metas: MetaItem[]) => api.salvarMetas(mes, metas),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['metas'] }),
+  })
+}
+
+export function useReceber(filtros: FiltrosReceber) {
+  return useQuery({
+    queryKey: ['receber', 'lista', filtros] as const,
+    queryFn: () => api.receber(filtros),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useReceberResumo() {
+  return useQuery({ queryKey: ['receber', 'resumo'] as const, queryFn: () => api.receberResumo() })
+}
+
+export function useTituloReceber(id: number) {
+  return useQuery({
+    queryKey: ['receber', 'detalhe', id] as const,
+    queryFn: () => api.titulo(id),
+    enabled: Number.isFinite(id),
+    retry: false,
+  })
+}
+
+export function useCriarTitulo() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (dados: TituloInput) => api.criarTitulo(dados),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['receber'] }),
+  })
+}
+
+export function useBaixarTitulo(id: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (dados: BaixaInput) => api.baixarTitulo(id, dados),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['receber'] }),
+  })
+}
+
+export function useEstornarBaixa(id: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (baixaId: number) => api.estornarBaixa(id, baixaId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['receber'] }),
+  })
+}
+
+export function useCancelarTitulo(id: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => api.cancelarTitulo(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['receber'] }),
+  })
+}
+
+export function useRegistrarCobranca(id: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (dados: CobrancaInput) => api.registrarCobranca(id, dados),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['receber'] }),
   })
 }

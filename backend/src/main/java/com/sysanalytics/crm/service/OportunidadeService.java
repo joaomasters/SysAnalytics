@@ -2,6 +2,7 @@ package com.sysanalytics.crm.service;
 
 import com.sysanalytics.crm.domain.*;
 import com.sysanalytics.crm.repository.OportunidadeRepository;
+import com.sysanalytics.crm.repository.ProdutoRepository;
 import com.sysanalytics.crm.repository.UsuarioRepository;
 import com.sysanalytics.crm.security.UsuarioLogado;
 import com.sysanalytics.crm.web.dto.OportunidadeDtos.*;
@@ -108,6 +109,7 @@ public class OportunidadeService {
     private final UsuarioRepository usuarioRepository;
     private final ClienteAcesso clienteAcesso;
     private final OportunidadeAcesso oportunidadeAcesso;
+    private final ProdutoRepository produtoRepository;
 
     @Transactional(readOnly = true)
     public List<OportunidadeResponse> listar(SituacaoOportunidade situacao, boolean somenteMinhas, Long clienteId) {
@@ -129,6 +131,12 @@ public class OportunidadeService {
         UsuarioLogado u = UsuarioLogado.atual();
         clienteAcesso.exigir(u, req.clienteId());
         Long responsavelId = resolverResponsavel(u, req.responsavelId(), u.usuarioId());
+        boolean comItens = req.itens() != null && !req.itens().isEmpty();
+        if (!comItens && req.valorEstimado() == null) {
+            throw new IllegalArgumentException("Informe o valor estimado ou escolha produtos do catálogo");
+        }
+        List<ItemCalculado> calculados = comItens ? calcularItens(u.empresaId(), req.itens()) : List.of();
+        BigDecimal valor = comItens ? soma(calculados) : req.valorEstimado();
         OffsetDateTime agora = OffsetDateTime.now();
         Oportunidade o = repository.save(Oportunidade.builder()
                 .empresaId(u.empresaId())
@@ -137,14 +145,79 @@ public class OportunidadeService {
                 .criadaPorId(u.usuarioId())
                 .titulo(req.titulo().trim())
                 .descricao(limpar(req.descricao()))
-                .valorEstimado(req.valorEstimado())
+                .valorEstimado(valor)
                 .etapa(EtapaOportunidade.PROSPECCAO)
                 .probabilidade(EtapaOportunidade.PROSPECCAO.getProbabilidadePadrao())
                 .dataPrevistaFechamento(req.dataPrevistaFechamento())
                 .criadaEm(agora)
                 .atualizadaEm(agora)
                 .build());
+        gravarItens(u.empresaId(), o.getId(), calculados);
         return resposta(u.empresaId(), o.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ItemResponse> itens(Long id) {
+        UsuarioLogado u = UsuarioLogado.atual();
+        oportunidadeAcesso.exigir(u, id);
+        return jdbcTemplate.query("""
+                SELECT id, produto_id, descricao, unidade, quantidade, preco_unitario
+                  FROM oportunidade_item WHERE empresa_id = ? AND oportunidade_id = ? ORDER BY id
+                """, (rs, i) -> {
+            BigDecimal qtd = rs.getBigDecimal("quantidade");
+            BigDecimal preco = rs.getBigDecimal("preco_unitario");
+            return new ItemResponse(rs.getLong("id"), rs.getLong("produto_id"), rs.getString("descricao"),
+                    rs.getString("unidade"), qtd, preco, dinheiro(qtd.multiply(preco)));
+        }, u.empresaId(), id);
+    }
+
+    /** Troca os itens e recalcula o valor estimado. Lista vazia remove os itens e mantém o valor atual. */
+    @Transactional
+    public OportunidadeResponse definirItens(Long id, List<ItemRequest> itens) {
+        UsuarioLogado u = UsuarioLogado.atual();
+        Oportunidade o = aberta(u, id);
+        List<ItemCalculado> calculados = calcularItens(u.empresaId(), itens);
+        jdbcTemplate.update("DELETE FROM oportunidade_item WHERE empresa_id = ? AND oportunidade_id = ?",
+                u.empresaId(), id);
+        gravarItens(u.empresaId(), id, calculados);
+        if (!calculados.isEmpty()) {
+            o.setValorEstimado(soma(calculados));
+        }
+        o.setAtualizadaEm(OffsetDateTime.now());
+        repository.flush();
+        return resposta(u.empresaId(), id);
+    }
+
+    private record ItemCalculado(Produto produto, BigDecimal quantidade) {
+    }
+
+    private List<ItemCalculado> calcularItens(Long empresaId, List<ItemRequest> itens) {
+        List<ItemCalculado> out = new ArrayList<>();
+        if (itens == null) return out;
+        for (ItemRequest it : itens) {
+            Produto p = produtoRepository.findByIdAndEmpresaId(it.produtoId(), empresaId)
+                    .filter(Produto::isAtivo)
+                    .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado ou inativo: " + it.produtoId()));
+            out.add(new ItemCalculado(p, it.quantidade()));
+        }
+        return out;
+    }
+
+    private void gravarItens(Long empresaId, Long oportunidadeId, List<ItemCalculado> itens) {
+        for (ItemCalculado it : itens) {
+            Produto p = it.produto();
+            jdbcTemplate.update("""
+                    INSERT INTO oportunidade_item (empresa_id, oportunidade_id, produto_id, descricao, unidade, quantidade, preco_unitario)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """, empresaId, oportunidadeId, p.getId(), p.getNome(), p.getUnidade(),
+                    it.quantidade(), p.getPrecoUnitario());
+        }
+    }
+
+    private static BigDecimal soma(List<ItemCalculado> itens) {
+        return dinheiro(itens.stream()
+                .map(i -> i.produto().getPrecoUnitario().multiply(i.quantidade()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
     }
 
     @Transactional
@@ -153,7 +226,12 @@ public class OportunidadeService {
         Oportunidade o = aberta(u, id);
         o.setTitulo(req.titulo().trim());
         o.setDescricao(limpar(req.descricao()));
-        o.setValorEstimado(req.valorEstimado());
+        Integer qtdItens = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM oportunidade_item WHERE empresa_id = ? AND oportunidade_id = ?",
+                Integer.class, u.empresaId(), id);
+        if (qtdItens == null || qtdItens == 0) {
+            o.setValorEstimado(req.valorEstimado());
+        } // com itens do catálogo, o valor é a soma dos itens e só muda pela edição dos itens
         o.setDataPrevistaFechamento(req.dataPrevistaFechamento());
         if (req.probabilidade() != null) {
             o.setProbabilidade(req.probabilidade());
