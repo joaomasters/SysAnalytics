@@ -1,6 +1,11 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import type {
+  CargaInput,
+  EventoCargaInput,
+  FiltrosCargas,
+  SentidoCarga,
+  TransportadoraInput,
   ContaInput,
   FiltrosFluxo,
   FiltrosPagar,
@@ -485,4 +490,74 @@ export function useFluxoCaixa(filtros: FiltrosFluxo) {
 
 export function useDre(ano: number) {
   return useQuery({ queryKey: ['dre', ano] as const, queryFn: () => api.dre(ano), placeholderData: keepPreviousData })
+}
+
+// ---------------------------------------------------------------- logística
+
+const invalidarLogistica = (qc: ReturnType<typeof useQueryClient>) => {
+  qc.invalidateQueries({ queryKey: ['cargas'] })
+  qc.invalidateQueries({ queryKey: ['transportadoras'] })
+}
+
+export function useTransportadoras(busca: string, incluirInativos = false, habilitado = true) {
+  return useQuery({
+    queryKey: ['transportadoras', { busca, incluirInativos }] as const,
+    queryFn: () => api.transportadoras(busca, incluirInativos),
+    placeholderData: keepPreviousData,
+    enabled: habilitado,
+  })
+}
+
+export function useSalvarTransportadora() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, dados }: { id?: number; dados: TransportadoraInput }) => api.salvarTransportadora(id, dados),
+    onSuccess: () => invalidarLogistica(qc),
+  })
+}
+
+export function useCargas(filtros: FiltrosCargas) {
+  return useQuery({
+    queryKey: ['cargas', 'lista', filtros] as const,
+    queryFn: () => api.cargas(filtros),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useCargasResumo(sentido?: SentidoCarga) {
+  return useQuery({ queryKey: ['cargas', 'resumo', sentido ?? 'TODOS'] as const, queryFn: () => api.cargasResumo(sentido) })
+}
+
+export function useCarga(id: number) {
+  return useQuery({
+    queryKey: ['cargas', 'detalhe', id] as const,
+    queryFn: () => api.carga(id),
+    enabled: Number.isFinite(id),
+    retry: false,
+  })
+}
+
+export function useCriarCarga() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: (d: CargaInput) => api.criarCarga(d), onSuccess: () => invalidarLogistica(qc) })
+}
+
+export function useAtualizarCarga(id: number) {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: (d: CargaInput) => api.atualizarCarga(id, d), onSuccess: () => invalidarLogistica(qc) })
+}
+
+export function useEventoCarga(id: number) {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: (d: EventoCargaInput) => api.eventoCarga(id, d), onSuccess: () => invalidarLogistica(qc) })
+}
+
+export function useResolverOcorrencia(id: number) {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: (eventoId: number) => api.resolverOcorrencia(id, eventoId), onSuccess: () => invalidarLogistica(qc) })
+}
+
+export function useCancelarCarga(id: number) {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: (motivo: string) => api.cancelarCarga(id, motivo), onSuccess: () => invalidarLogistica(qc) })
 }

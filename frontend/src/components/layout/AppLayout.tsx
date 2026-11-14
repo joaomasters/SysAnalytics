@@ -1,6 +1,8 @@
 import {
   BarChart3,
   Building2,
+  Truck,
+  Container,
   Landmark,
   LineChart,
   Receipt,
@@ -60,6 +62,13 @@ const GRUPOS: GrupoNav[] = [
       { to: '/financeiro/fornecedores', rotulo: 'Fornecedores', Icone: Building2, perfis: ['GESTOR', 'ADMIN'] },
       { to: '/financeiro/fluxo-caixa', rotulo: 'Fluxo de caixa', Icone: Landmark, perfis: ['GESTOR', 'ADMIN'] },
       { to: '/financeiro/dre', rotulo: 'DRE e margens', Icone: LineChart, perfis: ['GESTOR', 'ADMIN'] },
+    ],
+  },
+  {
+    titulo: 'Logística',
+    itens: [
+      { to: '/logistica/cargas', rotulo: 'Cargas e entregas', Icone: Truck },
+      { to: '/logistica/transportadoras', rotulo: 'Transportadoras', Icone: Container, perfis: ['GESTOR', 'ADMIN'] },
     ],
   },
   {
