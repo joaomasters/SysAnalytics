@@ -1,5 +1,9 @@
 import {
   BarChart3,
+  Building2,
+  Landmark,
+  LineChart,
+  Receipt,
   BellRing,
   ChevronRight,
   ClipboardCheck,
@@ -50,7 +54,13 @@ const GRUPOS: GrupoNav[] = [
   },
   {
     titulo: 'Financeiro',
-    itens: [{ to: '/financeiro/receber', rotulo: 'Contas a receber', Icone: HandCoins }],
+    itens: [
+      { to: '/financeiro/receber', rotulo: 'Contas a receber', Icone: HandCoins },
+      { to: '/financeiro/pagar', rotulo: 'Contas a pagar', Icone: Receipt, perfis: ['GESTOR', 'ADMIN'] },
+      { to: '/financeiro/fornecedores', rotulo: 'Fornecedores', Icone: Building2, perfis: ['GESTOR', 'ADMIN'] },
+      { to: '/financeiro/fluxo-caixa', rotulo: 'Fluxo de caixa', Icone: Landmark, perfis: ['GESTOR', 'ADMIN'] },
+      { to: '/financeiro/dre', rotulo: 'DRE e margens', Icone: LineChart, perfis: ['GESTOR', 'ADMIN'] },
+    ],
   },
   {
     titulo: 'Vendas',

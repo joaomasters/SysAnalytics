@@ -9,6 +9,11 @@ import { DashboardPage } from '@/pages/DashboardPage'
 import { FunilPage } from '@/pages/FunilPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { OportunidadeDetalhePage } from '@/pages/OportunidadeDetalhePage'
+import { ContaPagarPage } from '@/pages/ContaPagarPage'
+import { DrePage } from '@/pages/DrePage'
+import { FluxoCaixaPage } from '@/pages/FluxoCaixaPage'
+import { FornecedoresPage } from '@/pages/FornecedoresPage'
+import { PagarPage } from '@/pages/PagarPage'
 import { ReceberPage } from '@/pages/ReceberPage'
 import { TituloReceberPage } from '@/pages/TituloReceberPage'
 import { MetasPage } from '@/pages/MetasPage'
@@ -31,6 +36,11 @@ export default function App() {
           <Route index element={<Inicio />} />
           <Route element={<RequerPerfil perfis={['GESTOR', 'ADMIN']} />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/financeiro/pagar" element={<PagarPage />} />
+            <Route path="/financeiro/pagar/:id" element={<ContaPagarPage />} />
+            <Route path="/financeiro/fornecedores" element={<FornecedoresPage />} />
+            <Route path="/financeiro/fluxo-caixa" element={<FluxoCaixaPage />} />
+            <Route path="/financeiro/dre" element={<DrePage />} />
           </Route>
           <Route path="/clientes" element={<ClientesPage />} />
           <Route path="/clientes/:id" element={<ClienteDetalhePage />} />

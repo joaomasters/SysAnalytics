@@ -511,3 +511,169 @@ export interface FiltrosReceber {
   pagina: number
   tamanho: number
 }
+
+// ---------------------------------------------------------------- financeiro: a pagar, fluxo de caixa e DRE
+
+export type CategoriaDespesa =
+  | 'MERCADORIA'
+  | 'FRETE'
+  | 'IMPOSTOS'
+  | 'PESSOAL'
+  | 'ALUGUEL'
+  | 'UTILIDADES'
+  | 'MARKETING'
+  | 'SERVICOS'
+  | 'OUTROS'
+
+export interface Fornecedor {
+  id: number
+  nome: string
+  documento: string | null
+  contato: string | null
+  email: string | null
+  telefone: string | null
+  ativo: boolean
+  totalAberto: number
+  totalVencido: number
+}
+
+export interface FornecedorInput {
+  nome: string
+  documento?: string
+  contato?: string
+  email?: string
+  telefone?: string
+  ativo?: boolean
+}
+
+export interface ContaResumo {
+  id: number
+  fornecedorId: number
+  fornecedorNome: string
+  numeroDocumento: string
+  parcela: number
+  totalParcelas: number
+  descricao: string | null
+  categoria: CategoriaDespesa
+  dataEmissao: string
+  dataVencimento: string
+  valor: number
+  valorPago: number
+  saldo: number
+  status: 'ABERTO' | 'PARCIAL' | 'PAGO' | 'CANCELADO'
+  situacao: SituacaoTitulo
+  diasAtraso: number
+}
+
+export interface PagamentoItem {
+  id: number
+  dataPagamento: string
+  valor: number
+  formaPagamento: FormaPagamento
+  observacao: string | null
+  usuarioNome: string
+  criadaEm: string
+}
+
+export interface ContaDetalhe {
+  conta: ContaResumo
+  pagamentos: PagamentoItem[]
+}
+
+export interface ContaInput {
+  fornecedorId: number
+  numeroDocumento: string
+  descricao?: string
+  categoria: CategoriaDespesa
+  dataEmissao: string
+  primeiroVencimento: string
+  valorTotal: number
+  parcelas?: number
+  intervaloDias?: number
+}
+
+export interface PagamentoInput {
+  dataPagamento: string
+  valor: number
+  formaPagamento: FormaPagamento
+  observacao?: string
+}
+
+export interface FiltrosPagar {
+  situacao: FiltroTitulo
+  busca: string
+  categoria?: CategoriaDespesa
+  fornecedorId?: number
+  pagina: number
+  tamanho: number
+}
+
+export interface FaixaAgingPagar {
+  faixa: string
+  valor: number
+  quantidade: number
+}
+
+export interface ResumoPagar {
+  totalAberto: number
+  aVencer: number
+  vence7Dias: number
+  vencido: number
+  contasAbertas: number
+  contasVencidas: number
+  pagoNoMes: number
+  aging: FaixaAgingPagar[]
+  abertoPorCategoria: { categoria: CategoriaDespesa; valor: number }[]
+  maioresFornecedores: { fornecedorId: number; fornecedorNome: string; aberto: number; vencido: number }[]
+}
+
+export interface FluxoSemana {
+  inicio: string
+  fim: string
+  entradas: number
+  saidas: number
+  saldo: number
+  saldoAcumulado: number
+}
+
+export interface FluxoCaixa {
+  hoje: string
+  saldoInicial: number
+  receberAtrasado: number
+  pagarAtrasado: number
+  incluiReceberAtrasado: boolean
+  semanas: FluxoSemana[]
+  totalEntradas: number
+  totalSaidas: number
+  saldoFinalProjetado: number
+  menorSaldo: number
+  semanaMenorSaldo: string
+  historico: { mes: string; recebido: number; pago: number }[]
+}
+
+export interface FiltrosFluxo {
+  semanas: number
+  saldoInicial: number
+  incluirReceberAtrasado: boolean
+}
+
+export interface DreMes {
+  mes: number
+  receitaBruta: number
+  cmv: number
+  margemBruta: number
+  custosVariaveis: number
+  margemContribuicao: number
+  custosFixos: number
+  resultadoOperacional: number
+  margemBrutaPct: number | null
+  margemContribuicaoPct: number | null
+  resultadoPct: number | null
+}
+
+export interface Dre {
+  ano: number
+  meses: DreMes[]
+  total: DreMes
+  categorias: { tipo: 'CMV' | 'VARIAVEL' | 'FIXO'; categoria: string; valor: number }[]
+}
