@@ -1,4 +1,5 @@
 import type {
+  CategoriaDespesa,
   EtapaOportunidade,
   FormaPagamento,
   MotivoPerda,
@@ -106,3 +107,19 @@ export const RESULTADOS_COBRANCA: { valor: ResultadoCobranca; rotulo: string }[]
 export const rotuloForma = (v: FormaPagamento) => FORMAS_PAGAMENTO.find((f) => f.valor === v)?.rotulo ?? v
 export const rotuloTipoCobranca = (v: TipoCobranca) => TIPOS_COBRANCA.find((f) => f.valor === v)?.rotulo ?? v
 export const rotuloResultadoCobranca = (v: ResultadoCobranca) => RESULTADOS_COBRANCA.find((f) => f.valor === v)?.rotulo ?? v
+
+export const CATEGORIAS_DESPESA: { valor: CategoriaDespesa; rotulo: string }[] = [
+  { valor: 'MERCADORIA', rotulo: 'Mercadoria p/ revenda' },
+  { valor: 'FRETE', rotulo: 'Frete e logística' },
+  { valor: 'IMPOSTOS', rotulo: 'Impostos' },
+  { valor: 'PESSOAL', rotulo: 'Pessoal' },
+  { valor: 'ALUGUEL', rotulo: 'Aluguel' },
+  { valor: 'UTILIDADES', rotulo: 'Energia, água e telecom' },
+  { valor: 'MARKETING', rotulo: 'Marketing' },
+  { valor: 'SERVICOS', rotulo: 'Serviços' },
+  { valor: 'OUTROS', rotulo: 'Outros' },
+]
+
+export const rotuloCategoria = (v: string) => CATEGORIAS_DESPESA.find((c) => c.valor === v)?.rotulo ?? v
+
+export const MESES_CURTOS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']

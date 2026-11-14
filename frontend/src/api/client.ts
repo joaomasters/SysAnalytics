@@ -1,5 +1,16 @@
 import axios from 'axios'
 import type {
+  ContaDetalhe,
+  ContaInput,
+  ContaResumo,
+  Dre,
+  FiltrosFluxo,
+  FiltrosPagar,
+  FluxoCaixa,
+  Fornecedor,
+  FornecedorInput,
+  PagamentoInput,
+  ResumoPagar,
   ClienteDetalhe,
   ClienteRisco,
   ConcluirTarefaInput,
@@ -195,6 +206,52 @@ export const api = {
         },
       })
     ).data,
+
+  fornecedores: async (busca: string, incluirInativos: boolean) =>
+    (await http.get<Fornecedor[]>('/financeiro/fornecedores', { params: { busca: busca || undefined, incluirInativos } })).data,
+
+  salvarFornecedor: async (id: number | undefined, dados: FornecedorInput) =>
+    (id
+      ? await http.put<Fornecedor>(`/financeiro/fornecedores/${id}`, dados)
+      : await http.post<Fornecedor>('/financeiro/fornecedores', dados)
+    ).data,
+
+  pagar: async (f: FiltrosPagar) =>
+    (
+      await http.get<Pagina<ContaResumo>>('/financeiro/pagar', {
+        params: {
+          situacao: f.situacao,
+          busca: f.busca || undefined,
+          categoria: f.categoria,
+          fornecedorId: f.fornecedorId,
+          pagina: f.pagina,
+          tamanho: f.tamanho,
+        },
+      })
+    ).data,
+
+  pagarResumo: async () => (await http.get<ResumoPagar>('/financeiro/pagar/resumo')).data,
+
+  conta: async (id: number) => (await http.get<ContaDetalhe>(`/financeiro/pagar/${id}`)).data,
+
+  criarConta: async (dados: ContaInput) => (await http.post<ContaResumo[]>('/financeiro/pagar', dados)).data,
+
+  pagarConta: async (id: number, dados: PagamentoInput) =>
+    (await http.post<ContaDetalhe>(`/financeiro/pagar/${id}/pagamentos`, dados)).data,
+
+  estornarPagamento: async (id: number, pagamentoId: number) =>
+    (await http.delete<ContaDetalhe>(`/financeiro/pagar/${id}/pagamentos/${pagamentoId}`)).data,
+
+  cancelarConta: async (id: number) => (await http.post<ContaDetalhe>(`/financeiro/pagar/${id}/cancelar`)).data,
+
+  fluxoCaixa: async (f: FiltrosFluxo) =>
+    (
+      await http.get<FluxoCaixa>('/financeiro/fluxo-caixa', {
+        params: { semanas: f.semanas, saldoInicial: f.saldoInicial || undefined, incluirReceberAtrasado: f.incluirReceberAtrasado },
+      })
+    ).data,
+
+  dre: async (ano: number) => (await http.get<Dre>('/financeiro/dre', { params: { ano } })).data,
 
   receberResumo: async () => (await http.get<ResumoReceber>('/financeiro/receber/resumo')).data,
 

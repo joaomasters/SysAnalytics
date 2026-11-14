@@ -1,6 +1,11 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import type {
+  ContaInput,
+  FiltrosFluxo,
+  FiltrosPagar,
+  FornecedorInput,
+  PagamentoInput,
   BaixaInput,
   CobrancaInput,
   ConcluirTarefaInput,
@@ -396,4 +401,88 @@ export function useRegistrarCobranca(id: number) {
     mutationFn: (dados: CobrancaInput) => api.registrarCobranca(id, dados),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['receber'] }),
   })
+}
+
+// ---------------------------------------------------------------- financeiro: a pagar, fluxo de caixa, DRE
+
+const invalidarFinanceiro = (qc: ReturnType<typeof useQueryClient>) => {
+  qc.invalidateQueries({ queryKey: ['pagar'] })
+  qc.invalidateQueries({ queryKey: ['fornecedores'] })
+  qc.invalidateQueries({ queryKey: ['fluxo'] })
+  qc.invalidateQueries({ queryKey: ['dre'] })
+}
+
+export function useFornecedores(busca: string, incluirInativos = false) {
+  return useQuery({
+    queryKey: ['fornecedores', { busca, incluirInativos }] as const,
+    queryFn: () => api.fornecedores(busca, incluirInativos),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useSalvarFornecedor() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, dados }: { id?: number; dados: FornecedorInput }) => api.salvarFornecedor(id, dados),
+    onSuccess: () => invalidarFinanceiro(qc),
+  })
+}
+
+export function usePagar(filtros: FiltrosPagar) {
+  return useQuery({
+    queryKey: ['pagar', 'lista', filtros] as const,
+    queryFn: () => api.pagar(filtros),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function usePagarResumo() {
+  return useQuery({ queryKey: ['pagar', 'resumo'] as const, queryFn: () => api.pagarResumo() })
+}
+
+export function useConta(id: number) {
+  return useQuery({
+    queryKey: ['pagar', 'detalhe', id] as const,
+    queryFn: () => api.conta(id),
+    enabled: Number.isFinite(id),
+    retry: false,
+  })
+}
+
+export function useCriarConta() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: (d: ContaInput) => api.criarConta(d), onSuccess: () => invalidarFinanceiro(qc) })
+}
+
+export function usePagarConta(id: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (d: PagamentoInput) => api.pagarConta(id, d),
+    onSuccess: () => invalidarFinanceiro(qc),
+  })
+}
+
+export function useEstornarPagamento(id: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (pagamentoId: number) => api.estornarPagamento(id, pagamentoId),
+    onSuccess: () => invalidarFinanceiro(qc),
+  })
+}
+
+export function useCancelarConta(id: number) {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: () => api.cancelarConta(id), onSuccess: () => invalidarFinanceiro(qc) })
+}
+
+export function useFluxoCaixa(filtros: FiltrosFluxo) {
+  return useQuery({
+    queryKey: ['fluxo', filtros] as const,
+    queryFn: () => api.fluxoCaixa(filtros),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useDre(ano: number) {
+  return useQuery({ queryKey: ['dre', ano] as const, queryFn: () => api.dre(ano), placeholderData: keepPreviousData })
 }
