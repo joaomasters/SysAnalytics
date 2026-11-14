@@ -1,4 +1,7 @@
 import type {
+  CategoriaOcorrencia,
+  SituacaoCarga,
+  TipoEventoCarga,
   CategoriaDespesa,
   EtapaOportunidade,
   FormaPagamento,
@@ -123,3 +126,33 @@ export const CATEGORIAS_DESPESA: { valor: CategoriaDespesa; rotulo: string }[] =
 export const rotuloCategoria = (v: string) => CATEGORIAS_DESPESA.find((c) => c.valor === v)?.rotulo ?? v
 
 export const MESES_CURTOS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+
+export const SITUACAO_CARGA: Record<SituacaoCarga, { rotulo: string; variant: 'neutro' | 'alerta' | 'ok' | 'critico' | 'atencao' }> = {
+  AGUARDANDO: { rotulo: 'Aguardando coleta', variant: 'neutro' },
+  EM_TRANSITO: { rotulo: 'Em trânsito', variant: 'alerta' },
+  ATRASADA: { rotulo: 'Atrasada', variant: 'critico' },
+  ENTREGUE: { rotulo: 'Entregue', variant: 'ok' },
+  CANCELADA: { rotulo: 'Cancelada', variant: 'neutro' },
+}
+
+export const CATEGORIAS_OCORRENCIA: { valor: CategoriaOcorrencia; rotulo: string }[] = [
+  { valor: 'ATRASO', rotulo: 'Atraso' },
+  { valor: 'AVARIA', rotulo: 'Avaria' },
+  { valor: 'EXTRAVIO', rotulo: 'Extravio' },
+  { valor: 'RECUSA', rotulo: 'Recusa do destinatário' },
+  { valor: 'ENDERECO', rotulo: 'Endereço / local fechado' },
+  { valor: 'DOCUMENTO', rotulo: 'Documento / fiscal' },
+  { valor: 'OUTRO', rotulo: 'Outro' },
+]
+
+export const rotuloOcorrencia = (v: string) => CATEGORIAS_OCORRENCIA.find((c) => c.valor === v)?.rotulo ?? v
+
+export const ROTULO_EVENTO: Record<TipoEventoCarga, string> = {
+  CRIADA: 'Carga cadastrada',
+  EMBARCADA: 'Embarque',
+  ATUALIZACAO: 'Atualização de rota',
+  OCORRENCIA: 'Ocorrência',
+  ENTREGUE: 'Entrega',
+  CANCELADA: 'Cancelamento',
+  OBSERVACAO: 'Observação',
+}

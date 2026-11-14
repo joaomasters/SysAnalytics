@@ -1,5 +1,14 @@
 import axios from 'axios'
 import type {
+  CargaDetalhe,
+  CargaInput,
+  CargaResumo,
+  EventoCargaInput,
+  FiltrosCargas,
+  ResumoCargas,
+  SentidoCarga,
+  Transportadora,
+  TransportadoraInput,
   ContaDetalhe,
   ContaInput,
   ContaResumo,
@@ -252,6 +261,42 @@ export const api = {
     ).data,
 
   dre: async (ano: number) => (await http.get<Dre>('/financeiro/dre', { params: { ano } })).data,
+
+  transportadoras: async (busca: string, incluirInativos: boolean) =>
+    (await http.get<Transportadora[]>('/transportadoras', { params: { busca: busca || undefined, incluirInativos } })).data,
+
+  salvarTransportadora: async (id: number | undefined, dados: TransportadoraInput) =>
+    (id ? await http.put<Transportadora>(`/transportadoras/${id}`, dados) : await http.post<Transportadora>('/transportadoras', dados)).data,
+
+  cargas: async (f: FiltrosCargas) =>
+    (
+      await http.get<Pagina<CargaResumo>>('/cargas', {
+        params: {
+          sentido: f.sentido,
+          situacao: f.situacao,
+          busca: f.busca || undefined,
+          clienteId: f.clienteId,
+          transportadoraId: f.transportadoraId,
+          pagina: f.pagina,
+          tamanho: f.tamanho,
+        },
+      })
+    ).data,
+
+  cargasResumo: async (sentido?: SentidoCarga) => (await http.get<ResumoCargas>('/cargas/resumo', { params: { sentido } })).data,
+
+  carga: async (id: number) => (await http.get<CargaDetalhe>(`/cargas/${id}`)).data,
+
+  criarCarga: async (dados: CargaInput) => (await http.post<CargaDetalhe>('/cargas', dados)).data,
+
+  atualizarCarga: async (id: number, dados: CargaInput) => (await http.put<CargaDetalhe>(`/cargas/${id}`, dados)).data,
+
+  eventoCarga: async (id: number, dados: EventoCargaInput) => (await http.post<CargaDetalhe>(`/cargas/${id}/eventos`, dados)).data,
+
+  resolverOcorrencia: async (id: number, eventoId: number) =>
+    (await http.post<CargaDetalhe>(`/cargas/${id}/eventos/${eventoId}/resolver`)).data,
+
+  cancelarCarga: async (id: number, motivo: string) => (await http.post<CargaDetalhe>(`/cargas/${id}/cancelar`, { motivo })).data,
 
   receberResumo: async () => (await http.get<ResumoReceber>('/financeiro/receber/resumo')).data,
 

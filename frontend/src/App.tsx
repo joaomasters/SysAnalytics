@@ -3,6 +3,9 @@ import { useAuth } from '@/auth/AuthContext'
 import { paginaInicial, RequerLogin, RequerPerfil } from '@/auth/RotasProtegidas'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { AlertasPage } from '@/pages/AlertasPage'
+import { CargaPage } from '@/pages/CargaPage'
+import { CargasPage } from '@/pages/CargasPage'
+import { TransportadorasPage } from '@/pages/TransportadorasPage'
 import { ClienteDetalhePage } from '@/pages/ClienteDetalhePage'
 import { ClientesPage } from '@/pages/ClientesPage'
 import { DashboardPage } from '@/pages/DashboardPage'
@@ -36,6 +39,7 @@ export default function App() {
           <Route index element={<Inicio />} />
           <Route element={<RequerPerfil perfis={['GESTOR', 'ADMIN']} />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/logistica/transportadoras" element={<TransportadorasPage />} />
             <Route path="/financeiro/pagar" element={<PagarPage />} />
             <Route path="/financeiro/pagar/:id" element={<ContaPagarPage />} />
             <Route path="/financeiro/fornecedores" element={<FornecedoresPage />} />
@@ -48,6 +52,8 @@ export default function App() {
           <Route path="/oportunidades/:id" element={<OportunidadeDetalhePage />} />
           <Route path="/propostas/:id" element={<PropostaPage />} />
           <Route path="/propostas/:id/imprimir" element={<PropostaImpressaoPage />} />
+          <Route path="/logistica/cargas" element={<CargasPage />} />
+          <Route path="/logistica/cargas/:id" element={<CargaPage />} />
           <Route path="/financeiro/receber" element={<ReceberPage />} />
           <Route path="/financeiro/receber/:id" element={<TituloReceberPage />} />
           <Route path="/metas" element={<MetasPage />} />

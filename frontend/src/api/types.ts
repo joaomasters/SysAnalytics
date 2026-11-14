@@ -677,3 +677,129 @@ export interface Dre {
   total: DreMes
   categorias: { tipo: 'CMV' | 'VARIAVEL' | 'FIXO'; categoria: string; valor: number }[]
 }
+
+// ---------------------------------------------------------------- logística: transportadoras e cargas
+
+export type SentidoCarga = 'ENTRADA' | 'SAIDA'
+export type StatusCarga = 'AGUARDANDO' | 'EM_TRANSITO' | 'ENTREGUE' | 'CANCELADA'
+export type SituacaoCarga = 'AGUARDANDO' | 'EM_TRANSITO' | 'ATRASADA' | 'ENTREGUE' | 'CANCELADA'
+export type FiltroCarga = 'TODAS' | 'ATIVAS' | 'ATRASADAS' | 'COM_OCORRENCIA' | 'ENTREGUES' | 'CANCELADAS'
+export type TipoEventoCarga = 'CRIADA' | 'EMBARCADA' | 'ATUALIZACAO' | 'OCORRENCIA' | 'ENTREGUE' | 'CANCELADA' | 'OBSERVACAO'
+export type CategoriaOcorrencia = 'AVARIA' | 'ATRASO' | 'EXTRAVIO' | 'RECUSA' | 'ENDERECO' | 'DOCUMENTO' | 'OUTRO'
+
+export interface Transportadora {
+  id: number
+  nome: string
+  documento: string | null
+  contato: string | null
+  email: string | null
+  telefone: string | null
+  ativo: boolean
+  cargasAtivas: number
+  entregues90d: number
+  pontualidadePct90d: number | null
+  ocorrencias90d: number
+  freteTotal90d: number
+}
+
+export interface TransportadoraInput {
+  nome: string
+  documento?: string
+  contato?: string
+  email?: string
+  telefone?: string
+  ativo?: boolean
+}
+
+export interface CargaResumo {
+  id: number
+  sentido: SentidoCarga
+  codigo: string
+  status: StatusCarga
+  situacao: SituacaoCarga
+  transportadoraId: number | null
+  transportadoraNome: string | null
+  parceiroId: number
+  parceiroNome: string
+  numeroDocumento: string | null
+  origem: string | null
+  destino: string | null
+  codigoRastreio: string | null
+  dataEmbarque: string | null
+  previsaoEntrega: string
+  dataEntrega: string | null
+  diasAtraso: number
+  noPrazo: boolean | null
+  pesoKg: number | null
+  volumes: number | null
+  valorMercadoria: number | null
+  valorFrete: number | null
+  observacao: string | null
+  ocorrenciasAbertas: number
+}
+
+export interface EventoCarga {
+  id: number
+  tipo: TipoEventoCarga
+  categoria: CategoriaOcorrencia | null
+  descricao: string
+  local: string | null
+  ocorridoEm: string
+  resolvida: boolean
+  resolvidaEm: string | null
+  usuarioNome: string
+}
+
+export interface CargaDetalhe {
+  carga: CargaResumo
+  eventos: EventoCarga[]
+}
+
+export interface CargaInput {
+  sentido?: SentidoCarga
+  transportadoraId?: number | null
+  fornecedorId?: number
+  clienteId?: number
+  numeroDocumento?: string
+  origem?: string
+  destino?: string
+  codigoRastreio?: string
+  previsaoEntrega: string
+  pesoKg?: number
+  volumes?: number
+  valorMercadoria?: number
+  valorFrete?: number
+  observacao?: string
+}
+
+export interface EventoCargaInput {
+  tipo: Exclude<TipoEventoCarga, 'CRIADA' | 'CANCELADA'>
+  categoria?: CategoriaOcorrencia
+  descricao: string
+  local?: string
+  data?: string
+}
+
+export interface FiltrosCargas {
+  sentido?: SentidoCarga
+  situacao: FiltroCarga
+  busca: string
+  clienteId?: number
+  transportadoraId?: number
+  pagina: number
+  tamanho: number
+}
+
+export interface ResumoCargas {
+  aguardando: number
+  emTransito: number
+  atrasadas: number
+  comOcorrencia: number
+  entreguesNoMes: number
+  pontualidadePct90d: number | null
+  prazoMedioDias: number | null
+  freteNoMes: number | null
+  fretePctMercadoria: number | null
+  ranking: { id: number; nome: string; entregues: number; pontualidadePct: number | null; ocorrencias: number }[]
+  ocorrencias: { categoria: CategoriaOcorrencia; total: number; abertas: number }[]
+}
