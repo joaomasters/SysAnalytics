@@ -395,7 +395,7 @@ public class IndicadoresService {
                        COUNT(*) FILTER (WHERE c.data_entrega <= c.previsao_entrega) AS no_prazo,
                        AVG(c.data_entrega - c.data_embarque) FILTER (WHERE c.data_embarque IS NOT NULL) AS prazo,
                        SUM(c.valor_frete) AS frete, SUM(c.valor_mercadoria) FILTER (WHERE c.valor_frete IS NOT NULL) AS merc
-                  FROM carga c WHERE c.empresa_id = :e AND """ + ENTREGUE_NO_PERIODO + " GROUP BY 1", args,
+                  FROM carga c WHERE c.empresa_id = :e""" + " AND " + ENTREGUE_NO_PERIODO + " GROUP BY 1", args,
                 rs -> {
                     porMes.put(rs.getString("mes"), new M(rs.getLong("entregues"), rs.getLong("no_prazo"), rs.getBigDecimal("prazo"),
                             rs.getBigDecimal("frete"), rs.getBigDecimal("merc")));
