@@ -1,5 +1,9 @@
 import axios from 'axios'
 import type {
+  IndicadoresClientes,
+  IndicadoresFinanceiro,
+  IndicadoresLogistica,
+  IndicadoresVendas,
   CargaDetalhe,
   CargaInput,
   CargaResumo,
@@ -259,6 +263,11 @@ export const api = {
         params: { semanas: f.semanas, saldoInicial: f.saldoInicial || undefined, incluirReceberAtrasado: f.incluirReceberAtrasado },
       })
     ).data,
+
+  indicadoresVendas: async (meses: number) => (await http.get<IndicadoresVendas>('/indicadores/vendas', { params: { meses } })).data,
+  indicadoresClientes: async (meses: number) => (await http.get<IndicadoresClientes>('/indicadores/clientes', { params: { meses } })).data,
+  indicadoresFinanceiro: async (meses: number) => (await http.get<IndicadoresFinanceiro>('/indicadores/financeiro', { params: { meses } })).data,
+  indicadoresLogistica: async (meses: number) => (await http.get<IndicadoresLogistica>('/indicadores/logistica', { params: { meses } })).data,
 
   dre: async (ano: number) => (await http.get<Dre>('/financeiro/dre', { params: { ano } })).data,
 

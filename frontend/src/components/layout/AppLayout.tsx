@@ -74,6 +74,7 @@ const GRUPOS: GrupoNav[] = [
   {
     titulo: 'Vendas',
     itens: [
+      { to: '/indicadores', rotulo: 'Indicadores', Icone: BarChart3, perfis: ['GESTOR', 'ADMIN'] },
       { to: '/funil', rotulo: 'Funil de vendas', Icone: Target, prefixos: ['/oportunidades', '/propostas'] },
       { to: '/metas', rotulo: 'Metas', Icone: Flag },
       { to: '/produtos', rotulo: 'Catálogo de produtos', Icone: Package },

@@ -803,3 +803,54 @@ export interface ResumoCargas {
   ranking: { id: number; nome: string; entregues: number; pontualidadePct: number | null; ocorrencias: number }[]
   ocorrencias: { categoria: CategoriaOcorrencia; total: number; abertas: number }[]
 }
+
+// ---------------------------------------------------------------- indicadores avançados
+
+export interface RotuloValor { rotulo: string; valor: number | null; quantidade: number }
+export interface VendaMes { mes: string; faturamento: number; notas: number; ticketMedio: number; clientes: number }
+export interface VendedorDesempenho {
+  id: number; nome: string; faturamento: number; notas: number; ticketMedio: number; clientes: number
+  participacaoPct: number | null; metaMes: number | null; realizadoMes: number; atingimentoPct: number | null
+}
+export interface FunilIndicadores {
+  criadas: number; ganhas: number; perdidas: number; abertas: number; taxaConversaoPct: number | null
+  cicloMedioDias: number | null; ticketMedioGanho: number; valorGanho: number; valorPerdido: number
+  pipelineAberto: number; previsaoPonderada: number; perdasPorMotivo: RotuloValor[]
+}
+export interface ProdutoCotado { descricao: string; quantidade: number; valor: number; propostas: number }
+export interface PropostasIndicadores {
+  enviadas: number; aceitas: number; recusadas: number; taxaAceitePct: number | null
+  descontoMedioPct: number | null; valorAceito: number; topProdutos: ProdutoCotado[]
+}
+export interface IndicadoresVendas {
+  meses: number; faturamento: number; faturamentoAnterior: number; variacaoPct: number | null; notas: number
+  ticketMedio: number; clientesAtendidos: number; serie: VendaMes[]; vendedores: VendedorDesempenho[]
+  funil: FunilIndicadores; propostas: PropostasIndicadores
+}
+export interface ClasseAbc { classe: string; clientes: number; clientesPct: number | null; faturamento: number; participacaoPct: number | null }
+export interface RetencaoMes { mes: string; ativos: number; recorrentes: number; retencaoPct: number | null }
+export interface IndicadoresClientes {
+  meses: number; totalClientes: number; ativos90d: number; inativos90d: number; taxaAtividadePct: number | null
+  novosNoPeriodo: number; ticketMedioPorCliente: number; frequenciaMediaDias: number | null; recompraPct: number | null
+  concentracaoTop10Pct: number | null; faixasInatividade: RotuloValor[]; curvaAbc: ClasseAbc[]; retencao: RetencaoMes[]
+  porSegmento: RotuloValor[]; porUf: RotuloValor[]; topClientes: RotuloValor[]
+}
+export interface FinanceiroMes {
+  mes: string; recebido: number; pago: number; saldo: number; receita: number; margemBrutaPct: number | null; resultadoPct: number | null
+}
+export interface IndicadoresFinanceiro {
+  meses: number; prazoMedioRecebimentoDias: number | null; prazoMedioPagamentoDias: number | null; diferencaPrazoDias: number | null
+  inadimplenciaPct: number | null; pontualidadeRecebimentoPct: number | null; atrasoMedioRecebidosDias: number | null
+  aReceberAberto: number; aPagarAberto: number; posicaoLiquida: number; serie: FinanceiroMes[]
+  concentracaoRecebiveis: RotuloValor[]; concentracaoTop5Pct: number | null
+}
+export interface LogisticaMes { mes: string; entregues: number; pontualidadePct: number | null; prazoMedioDias: number | null; ocorrencias: number; fretePct: number | null }
+export interface LogisticaGrupo {
+  rotulo: string; entregues: number; pontualidadePct: number | null; prazoMedioDias: number | null; atrasoMedioDias: number | null
+  ocorrenciasPor100: number | null; fretePct: number | null; freteTotal: number
+}
+export interface IndicadoresLogistica {
+  meses: number; cargas: number; entregues: number; pontualidadePct: number | null; prazoMedioDias: number | null
+  atrasoMedioDias: number | null; fretePct: number | null; ocorrenciasPor100: number | null; serie: LogisticaMes[]
+  porSentido: LogisticaGrupo[]; porTransportadora: LogisticaGrupo[]; porUfDestino: LogisticaGrupo[]; porFornecedor: LogisticaGrupo[]
+}

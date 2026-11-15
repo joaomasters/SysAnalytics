@@ -14,6 +14,7 @@ import { LoginPage } from '@/pages/LoginPage'
 import { OportunidadeDetalhePage } from '@/pages/OportunidadeDetalhePage'
 import { ContaPagarPage } from '@/pages/ContaPagarPage'
 import { DrePage } from '@/pages/DrePage'
+import { IndicadoresPage } from '@/pages/IndicadoresPage'
 import { FluxoCaixaPage } from '@/pages/FluxoCaixaPage'
 import { FornecedoresPage } from '@/pages/FornecedoresPage'
 import { PagarPage } from '@/pages/PagarPage'
@@ -45,6 +46,7 @@ export default function App() {
             <Route path="/financeiro/fornecedores" element={<FornecedoresPage />} />
             <Route path="/financeiro/fluxo-caixa" element={<FluxoCaixaPage />} />
             <Route path="/financeiro/dre" element={<DrePage />} />
+            <Route path="/indicadores" element={<IndicadoresPage />} />
           </Route>
           <Route path="/clientes" element={<ClientesPage />} />
           <Route path="/clientes/:id" element={<ClienteDetalhePage />} />

@@ -561,3 +561,14 @@ export function useCancelarCarga(id: number) {
   const qc = useQueryClient()
   return useMutation({ mutationFn: (motivo: string) => api.cancelarCarga(id, motivo), onSuccess: () => invalidarLogistica(qc) })
 }
+
+// ---------------------------------------------------------------- indicadores
+
+export const useIndicadoresVendas = (meses: number) =>
+  useQuery({ queryKey: ['ind-vendas', meses] as const, queryFn: () => api.indicadoresVendas(meses), placeholderData: keepPreviousData })
+export const useIndicadoresClientes = (meses: number) =>
+  useQuery({ queryKey: ['ind-clientes', meses] as const, queryFn: () => api.indicadoresClientes(meses), placeholderData: keepPreviousData })
+export const useIndicadoresFinanceiro = (meses: number) =>
+  useQuery({ queryKey: ['ind-financeiro', meses] as const, queryFn: () => api.indicadoresFinanceiro(meses), placeholderData: keepPreviousData })
+export const useIndicadoresLogistica = (meses: number) =>
+  useQuery({ queryKey: ['ind-logistica', meses] as const, queryFn: () => api.indicadoresLogistica(meses), placeholderData: keepPreviousData })
