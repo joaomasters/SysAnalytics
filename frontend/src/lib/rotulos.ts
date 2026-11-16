@@ -156,3 +156,22 @@ export const ROTULO_EVENTO: Record<TipoEventoCarga, string> = {
   CANCELADA: 'Cancelamento',
   OBSERVACAO: 'Observação',
 }
+
+export const ROTULO_PERFIL: Record<'ADMIN' | 'GESTOR' | 'VENDEDOR', string> = {
+  ADMIN: 'Administrador',
+  GESTOR: 'Gestor',
+  VENDEDOR: 'Vendedor',
+}
+
+export const ROTULO_EVENTO_SEGURANCA: Record<string, { rotulo: string; tom: 'ok' | 'neutro' | 'alerta' | 'critico' }> = {
+  LOGIN_OK: { rotulo: 'Login', tom: 'ok' },
+  LOGIN_FALHA: { rotulo: 'Senha incorreta', tom: 'alerta' },
+  LOGIN_BLOQUEADO: { rotulo: 'Conta bloqueada', tom: 'critico' },
+  SENHA_ALTERADA: { rotulo: 'Senha alterada', tom: 'neutro' },
+  SENHA_REDEFINIDA: { rotulo: 'Senha redefinida', tom: 'alerta' },
+  USUARIO_CRIADO: { rotulo: 'Usuário criado', tom: 'ok' },
+  USUARIO_ALTERADO: { rotulo: 'Usuário alterado', tom: 'neutro' },
+  USUARIO_ATIVADO: { rotulo: 'Usuário ativado', tom: 'ok' },
+  USUARIO_DESATIVADO: { rotulo: 'Usuário desativado', tom: 'critico' },
+  USUARIO_DESBLOQUEADO: { rotulo: 'Usuário desbloqueado', tom: 'neutro' },
+}

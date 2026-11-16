@@ -13,6 +13,8 @@ export function RequerLogin() {
   const local = useLocation()
   if (carregando) return <p className="p-8 text-sm text-muted-foreground">Carregando…</p>
   if (!usuario) return <Navigate to="/login" replace state={{ de: local.pathname }} />
+  // senha definida por outra pessoa: só libera o sistema depois que o usuário cadastrar a própria
+  if (usuario.senhaTemporaria && local.pathname !== '/conta') return <Navigate to="/conta" replace />
   return <Outlet />
 }
 

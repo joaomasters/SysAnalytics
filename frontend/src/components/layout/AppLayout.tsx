@@ -1,4 +1,6 @@
 import {
+  KeyRound,
+  UserCog,
   BarChart3,
   Building2,
   Truck,
@@ -24,6 +26,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import type { Perfil } from '@/api/types'
 import { useAuth } from '@/auth/AuthContext'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { cn } from '@/lib/utils'
 import { NotificationBell } from './NotificationBell'
 
@@ -78,6 +81,13 @@ const GRUPOS: GrupoNav[] = [
       { to: '/funil', rotulo: 'Funil de vendas', Icone: Target, prefixos: ['/oportunidades', '/propostas'] },
       { to: '/metas', rotulo: 'Metas', Icone: Flag },
       { to: '/produtos', rotulo: 'Catálogo de produtos', Icone: Package },
+    ],
+  },
+  {
+    titulo: 'Administração',
+    itens: [
+      { to: '/configuracoes/usuarios', rotulo: 'Usuários e acessos', Icone: UserCog, perfis: ['GESTOR', 'ADMIN'] },
+      { to: '/conta', rotulo: 'Minha conta', Icone: KeyRound },
     ],
   },
 ]
@@ -210,12 +220,12 @@ export function AppLayout() {
 
         <div className="ml-auto flex items-center gap-1 sm:ml-0">
           <NotificationBell />
-          <div className="hidden px-2 text-right leading-tight lg:block">
+          <Link to="/conta" title="Minha conta" className="hidden rounded-sm px-2 text-right leading-tight hover:bg-white/10 lg:block">
             <p className="text-sm font-semibold">{usuario?.nome}</p>
             <p className="text-[11px] text-white/70">
               {usuario?.empresaNome} · {usuario?.perfil}
             </p>
-          </div>
+          </Link>
           <div
             className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-xs font-semibold ring-1 ring-white/40"
             title={usuario?.nome}
@@ -294,7 +304,14 @@ export function AppLayout() {
             </div>
           )}
           <main className="flex-1 px-4 py-5 md:px-6 print:p-0">
-            <Outlet />
+            {usuario?.senhaTemporaria && (
+              <p role="alert" className="mb-4 rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                Sua senha é temporária. Defina uma nova senha para liberar o sistema.
+              </p>
+            )}
+            <ErrorBoundary chaveReset={pathname}>
+              <Outlet />
+            </ErrorBoundary>
           </main>
         </div>
       </div>
