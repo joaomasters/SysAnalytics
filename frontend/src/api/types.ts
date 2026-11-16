@@ -111,6 +111,8 @@ export interface Usuario {
   empresaId: number
   empresaNome: string
   vendedorId: number | null
+  /** true: senha definida por outra pessoa; precisa ser trocada antes de usar o sistema */
+  senhaTemporaria: boolean
 }
 
 export interface LoginResposta {
@@ -853,4 +855,44 @@ export interface IndicadoresLogistica {
   meses: number; cargas: number; entregues: number; pontualidadePct: number | null; prazoMedioDias: number | null
   atrasoMedioDias: number | null; fretePct: number | null; ocorrenciasPor100: number | null; serie: LogisticaMes[]
   porSentido: LogisticaGrupo[]; porTransportadora: LogisticaGrupo[]; porUfDestino: LogisticaGrupo[]; porFornecedor: LogisticaGrupo[]
+}
+
+// ---------------------------------------------------------------- usuários e segurança
+
+export interface UsuarioItem {
+  id: number
+  nome: string
+  email: string
+  perfil: Perfil
+  vendedorId: number | null
+  vendedorNome: string | null
+  ativo: boolean
+  senhaTemporaria: boolean
+  bloqueado: boolean
+  criadoEm: string
+  ultimoLoginEm: string | null
+}
+export interface UsuarioInput {
+  nome: string
+  email: string
+  perfil: Perfil
+  vendedorId: number | null
+}
+export interface SenhaTemporariaResposta {
+  usuario: UsuarioItem
+  senhaTemporaria: string
+}
+export interface VendedorOpcao {
+  id: number
+  nome: string
+  vinculado: boolean
+}
+export interface EventoSeguranca {
+  id: number
+  tipo: string
+  usuarioNome: string | null
+  alvoNome: string | null
+  detalhe: string | null
+  ip: string | null
+  criadoEm: string
 }

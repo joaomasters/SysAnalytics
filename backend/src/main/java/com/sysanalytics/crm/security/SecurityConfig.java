@@ -17,8 +17,6 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
 import javax.crypto.SecretKey;
@@ -30,8 +28,8 @@ import java.nio.charset.StandardCharsets;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, SessaoJwtConverter jwtAuthenticationConverter,
+                                                   RespostasSeguranca respostas) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable) // API stateless com Bearer token
                 .cors(Customizer.withDefaults())       // usa o mapeamento do WebConfig
@@ -41,19 +39,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/login", "/actuator/health",
                                 "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
-                .oauth2ResourceServer(o -> o.jwt(j -> j.jwtAuthenticationConverter(jwtAuthenticationConverter)));
+                .exceptionHandling(e -> e.authenticationEntryPoint(respostas).accessDeniedHandler(respostas))
+                .oauth2ResourceServer(o -> o
+                        .authenticationEntryPoint(respostas)
+                        .accessDeniedHandler(respostas)
+                        .jwt(j -> j.jwtAuthenticationConverter(jwtAuthenticationConverter)));
         return http.build();
-    }
-
-    /** O claim "perfil" (ADMIN/GESTOR/VENDEDOR) vira a authority ROLE_{perfil}. */
-    @Bean
-    public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter authorities = new JwtGrantedAuthoritiesConverter();
-        authorities.setAuthoritiesClaimName("perfil");
-        authorities.setAuthorityPrefix("ROLE_");
-        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(authorities);
-        return converter;
     }
 
     @Bean
@@ -61,6 +52,10 @@ public class SecurityConfig {
         byte[] bytes = secret.getBytes(StandardCharsets.UTF_8);
         if (bytes.length < 32) {
             throw new IllegalStateException("crm.security.jwt-secret precisa ter ao menos 32 caracteres");
+        }
+        if (secret.startsWith("dev-only")) {
+            org.slf4j.LoggerFactory.getLogger(SecurityConfig.class)
+                    .warn("ATENÇÃO: usando o JWT_SECRET padrão de desenvolvimento. Defina a variável JWT_SECRET antes de ir para produção.");
         }
         return new SecretKeySpec(bytes, "HmacSHA256");
     }

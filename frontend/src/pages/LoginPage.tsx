@@ -1,4 +1,4 @@
-import { BarChart3, ShieldCheck, Target, Users } from 'lucide-react'
+import { BarChart3, Eye, EyeOff, ShieldCheck, Target, Users } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { mensagemDeErro } from '@/api/client'
@@ -14,7 +14,7 @@ const DESTAQUES = [
 ]
 
 export function LoginPage() {
-  const { usuario, login } = useAuth()
+  const { usuario, login, aviso } = useAuth()
   const navigate = useNavigate()
   const local = useLocation()
   const destino = (local.state as { de?: string } | null)?.de
@@ -22,6 +22,7 @@ export function LoginPage() {
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
+  const [mostrar, setMostrar] = useState(false)
 
   if (usuario) return <Navigate to={destino ?? paginaInicial(usuario.perfil)} replace />
 
@@ -104,16 +105,31 @@ export function LoginPage() {
               <label htmlFor="senha" className="text-sm font-semibold">
                 Senha
               </label>
-              <Input
-                id="senha"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="h-9"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  id="senha"
+                  type={mostrar ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  required
+                  className="h-9 pr-10"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setMostrar((v) => !v)}
+                  aria-label={mostrar ? 'Ocultar senha' : 'Mostrar senha'}
+                  className="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground hover:bg-accent"
+                >
+                  {mostrar ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </div>
+            {aviso && !erro && (
+              <p role="status" className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                {aviso}
+              </p>
+            )}
             {erro && (
               <p role="alert" className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
                 {erro}

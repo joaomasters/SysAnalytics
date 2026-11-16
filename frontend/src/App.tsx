@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { paginaInicial, RequerLogin, RequerPerfil } from '@/auth/RotasProtegidas'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { ContaPage } from '@/pages/ContaPage'
+import { UsuariosPage } from '@/pages/UsuariosPage'
 import { AlertasPage } from '@/pages/AlertasPage'
 import { CargaPage } from '@/pages/CargaPage'
 import { CargasPage } from '@/pages/CargasPage'
@@ -47,6 +49,7 @@ export default function App() {
             <Route path="/financeiro/fluxo-caixa" element={<FluxoCaixaPage />} />
             <Route path="/financeiro/dre" element={<DrePage />} />
             <Route path="/indicadores" element={<IndicadoresPage />} />
+            <Route path="/configuracoes/usuarios" element={<UsuariosPage />} />
           </Route>
           <Route path="/clientes" element={<ClientesPage />} />
           <Route path="/clientes/:id" element={<ClienteDetalhePage />} />
@@ -62,6 +65,7 @@ export default function App() {
           <Route path="/produtos" element={<ProdutosPage />} />
           <Route path="/tarefas" element={<TarefasPage />} />
           <Route path="/alertas" element={<AlertasPage />} />
+          <Route path="/conta" element={<ContaPage />} />
           <Route path="*" element={<Inicio />} />
         </Route>
       </Route>

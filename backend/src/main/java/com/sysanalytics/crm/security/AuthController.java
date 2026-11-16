@@ -20,6 +20,12 @@ public class AuthController {
         return service.login(request.email(), request.senha());
     }
 
+    @Operation(summary = "Troca a própria senha (encerra as outras sessões e devolve um token novo)")
+    @PostMapping("/senha")
+    public AuthDtos.TokenResponse trocarSenha(@Valid @RequestBody AuthDtos.TrocarSenhaRequest request) {
+        return service.trocarSenha(UsuarioLogado.atual().usuarioId(), request.senhaAtual(), request.novaSenha());
+    }
+
     @Operation(summary = "Dados do usuário autenticado")
     @GetMapping("/me")
     public AuthDtos.UsuarioResponse me() {

@@ -46,4 +46,24 @@ public class Usuario {
 
     @Column(name = "ultimo_login_em")
     private OffsetDateTime ultimoLoginEm;
+
+    /** Incrementado para invalidar todos os tokens já emitidos (troca/redefinição de senha, mudança de perfil, desativação). */
+    @Column(name = "token_versao", nullable = false)
+    private int tokenVersao;
+
+    @Column(name = "tentativas_falhas", nullable = false)
+    private int tentativasFalhas;
+
+    @Column(name = "bloqueado_ate")
+    private OffsetDateTime bloqueadoAte;
+
+    /** Senha definida por outra pessoa (cadastro ou redefinição): precisa ser trocada no próximo acesso. */
+    @Column(name = "senha_temporaria", nullable = false)
+    private boolean senhaTemporaria;
+
+    @Column(name = "senha_alterada_em")
+    private OffsetDateTime senhaAlteradaEm;
+
+    @Column(name = "atualizado_em")
+    private OffsetDateTime atualizadoEm;
 }

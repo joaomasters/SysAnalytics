@@ -1,5 +1,10 @@
 import axios from 'axios'
 import type {
+  EventoSeguranca,
+  SenhaTemporariaResposta,
+  UsuarioInput,
+  UsuarioItem,
+  VendedorOpcao,
   IndicadoresClientes,
   IndicadoresFinanceiro,
   IndicadoresLogistica,
@@ -121,16 +126,51 @@ http.interceptors.response.use(
   },
 )
 
-/** Extrai a mensagem de erro de um ProblemDetail do Spring, quando existir. */
+/** Mensagem padrão por status, para quando a API não devolve um `detail` legível. */
+const MENSAGEM_POR_STATUS: Record<number, string> = {
+  400: 'Os dados informados são inválidos.',
+  401: 'Sua sessão expirou. Entre novamente.',
+  403: 'Você não tem permissão para realizar esta ação.',
+  404: 'Registro não encontrado.',
+  405: 'Operação não permitida.',
+  409: 'Os dados conflitam com um registro existente.',
+  413: 'O conteúdo enviado é grande demais.',
+  423: 'Conta temporariamente bloqueada.',
+  429: 'Muitas tentativas em pouco tempo. Aguarde um instante e tente de novo.',
+  500: 'Ocorreu um erro inesperado no servidor. Tente novamente em instantes.',
+  502: 'O servidor está indisponível no momento. Tente novamente em instantes.',
+  503: 'O servidor está indisponível no momento. Tente novamente em instantes.',
+  504: 'O servidor demorou demais para responder. Tente novamente.',
+}
+
+/** Extrai uma mensagem em português de qualquer erro: ProblemDetail da API, falha de rede, timeout ou status HTTP. */
 export function mensagemDeErro(erro: unknown): string {
   if (axios.isAxiosError(erro)) {
-    const detail = (erro.response?.data as { detail?: string } | undefined)?.detail
-    return detail ?? erro.message
+    const dados = erro.response?.data as { detail?: unknown; protocolo?: unknown } | undefined
+    const detalhe = typeof dados?.detail === 'string' && dados.detail.trim() ? dados.detail : null
+    if (detalhe) return detalhe
+    if (erro.code === 'ECONNABORTED') return 'O servidor demorou demais para responder. Tente novamente.'
+    if (!erro.response) return 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.'
+    const status = erro.response.status
+    return MENSAGEM_POR_STATUS[status] ?? (status >= 500 ? MENSAGEM_POR_STATUS[500] : 'Não foi possível concluir a operação.')
   }
-  return erro instanceof Error ? erro.message : 'Erro inesperado'
+  return erro instanceof Error && erro.message ? erro.message : 'Erro inesperado.'
 }
 
 export const api = {
+  trocarSenha: async (senhaAtual: string, novaSenha: string) =>
+    (await http.post<LoginResposta>('/auth/senha', { senhaAtual, novaSenha })).data,
+
+  usuarios: async (busca: string, incluirInativos: boolean) =>
+    (await http.get<UsuarioItem[]>('/usuarios', { params: { busca: busca || undefined, incluirInativos } })).data,
+  vendedoresOpcao: async () => (await http.get<VendedorOpcao[]>('/usuarios/vendedores')).data,
+  eventosSeguranca: async () => (await http.get<EventoSeguranca[]>('/usuarios/eventos')).data,
+  criarUsuario: async (dados: UsuarioInput) => (await http.post<SenhaTemporariaResposta>('/usuarios', dados)).data,
+  atualizarUsuario: async (id: number, dados: UsuarioInput) => (await http.put<UsuarioItem>(`/usuarios/${id}`, dados)).data,
+  definirUsuarioAtivo: async (id: number, ativo: boolean) => (await http.patch<UsuarioItem>(`/usuarios/${id}/ativo`, { ativo })).data,
+  redefinirSenhaUsuario: async (id: number) => (await http.post<SenhaTemporariaResposta>(`/usuarios/${id}/redefinir-senha`)).data,
+  desbloquearUsuario: async (id: number) => (await http.post<UsuarioItem>(`/usuarios/${id}/desbloquear`)).data,
+
   login: async (email: string, senha: string) =>
     (await http.post<LoginResposta>('/auth/login', { email, senha })).data,
 

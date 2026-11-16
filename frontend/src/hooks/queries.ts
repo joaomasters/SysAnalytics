@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import type {
+  UsuarioInput,
   CargaInput,
   EventoCargaInput,
   FiltrosCargas,
@@ -572,3 +573,33 @@ export const useIndicadoresFinanceiro = (meses: number) =>
   useQuery({ queryKey: ['ind-financeiro', meses] as const, queryFn: () => api.indicadoresFinanceiro(meses), placeholderData: keepPreviousData })
 export const useIndicadoresLogistica = (meses: number) =>
   useQuery({ queryKey: ['ind-logistica', meses] as const, queryFn: () => api.indicadoresLogistica(meses), placeholderData: keepPreviousData })
+
+// ---------------------------------------------------------------- usuários
+
+export const useUsuarios = (busca: string, incluirInativos: boolean) =>
+  useQuery({ queryKey: ['usuarios', { busca, incluirInativos }] as const, queryFn: () => api.usuarios(busca, incluirInativos), placeholderData: keepPreviousData })
+
+export const useVendedoresOpcao = (habilitado = true) =>
+  useQuery({ queryKey: ['usuarios-vendedores'] as const, queryFn: api.vendedoresOpcao, enabled: habilitado })
+
+export const useEventosSeguranca = () =>
+  useQuery({ queryKey: ['usuarios-eventos'] as const, queryFn: api.eventosSeguranca })
+
+function useMutacaoUsuario<T, V>(fn: (v: V) => Promise<T>, silencioso = false) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: fn,
+    meta: { silencioso },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['usuarios'] })
+      qc.invalidateQueries({ queryKey: ['usuarios-vendedores'] })
+      qc.invalidateQueries({ queryKey: ['usuarios-eventos'] })
+    },
+  })
+}
+
+export const useCriarUsuario = () => useMutacaoUsuario((d: UsuarioInput) => api.criarUsuario(d), true)
+export const useAtualizarUsuario = () => useMutacaoUsuario(({ id, dados }: { id: number; dados: UsuarioInput }) => api.atualizarUsuario(id, dados), true)
+export const useDefinirUsuarioAtivo = () => useMutacaoUsuario(({ id, ativo }: { id: number; ativo: boolean }) => api.definirUsuarioAtivo(id, ativo))
+export const useRedefinirSenhaUsuario = () => useMutacaoUsuario((id: number) => api.redefinirSenhaUsuario(id))
+export const useDesbloquearUsuario = () => useMutacaoUsuario((id: number) => api.desbloquearUsuario(id))
